@@ -1,0 +1,81 @@
+---
+title: "Create ZFS Pool & Datasets"
+description: "Create the ZFS mirror pool and datasets for media storage, downloads, and TV/movies."
+tags: ["zfs", "storage", "proxmox", "datasets"]
+---
+
+# Create ZFS Pool & Datasets
+
+The media storage uses a ZFS mirror pool. A mirror protects against a single disk failure and is the minimum recommended setup for data you care about.
+
+## Create the pool
+
+Run this on the Proxmox host. Replace `/dev/sdb` and `/dev/sdc` with your actual data disk names (check with `lsblk`):
+
+```bash
+zpool create tank mirror /dev/sdb /dev/sdc
+```
+
+This creates a pool named `tank` using a two-disk mirror. The pool name `tank` is used throughout this documentation.
+
+Verify the pool was created:
+
+```bash
+zpool status tank
+```
+
+## Create datasets
+
+Create separate datasets for media and downloads. Datasets give you finer control over compression, snapshots, and quotas later.
+
+```bash
+zfs create tank/media
+zfs create tank/media/movies
+zfs create tank/media/tv
+zfs create tank/media/downloads
+```
+
+Verify:
+
+```bash
+zfs list
+```
+
+You should see:
+
+```
+NAME                   USED  AVAIL  REFER  MOUNTPOINT
+tank                   ...   ...    ...    /tank
+tank/media             ...   ...    ...    /tank/media
+tank/media/movies      ...   ...    ...    /tank/media/movies
+tank/media/tv          ...   ...    ...    /tank/media/tv
+tank/media/downloads   ...   ...    ...    /tank/media/downloads
+```
+
+## Enable compression
+
+ZFS compression is transparent and effectively free on modern hardware. Enable it on all datasets:
+
+```bash
+zfs set compression=lz4 tank/media
+```
+
+This applies to all child datasets automatically.
+
+## Set ownership
+
+Set the correct ownership so that the Plex LXC and Docker VM (both running as UID/GID 1000) can write to these paths:
+
+```bash
+chown -R 1000:1000 /tank/media
+```
+
+## Result
+
+Storage is ready:
+
+- `/tank/media/movies` — final movie library
+- `/tank/media/tv` — final TV library
+- `/tank/media/downloads` — download staging area
+
+Continue to [Mount Storage into LXC & VM](/docs/home-server/media-automation/installation/mount-storage).

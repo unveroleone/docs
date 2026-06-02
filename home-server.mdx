@@ -1,0 +1,45 @@
+---
+title: "Home Server — Overview"
+description: "All documentation for my self-hosted homelab running on Proxmox VE — media automation, home automation, monitoring, and infrastructure."
+tags: ["proxmox", "homelab", "infrastructure", "self-hosted"]
+---
+
+# Home Server
+
+This is the documentation for my home server — a self-hosted Proxmox setup running media automation, home automation, monitoring, and various other services. Everything here is written from what I actually run, not from theory.
+
+The server runs on a single Proxmox VE node. Services are split between LXC containers (for things that need direct hardware access, like Plex) and Docker containers inside VMs (for everything else).
+
+## What's documented here
+
+| Section | What it covers |
+|---------|---------------|
+| [Media Automation](/docs/home-server/media-automation/what-this-stack-does) | Plex + Usenet stack: Sonarr, Radarr, Prowlarr, SABnzbd, Seerr |
+| Home Automation | Home Assistant setup, automations, and integrations |
+
+## Infrastructure at a glance
+
+- **Host**: Proxmox VE 8.x, bare metal
+- **Storage**: ZFS mirror pool (`tank`) for media, NVMe for system disks
+- **Networking**: Flat LAN, Cloudflare Tunnel for external access where needed
+- **Monitoring**: Prometheus + Grafana + Telegram alerts
+
+## MCP server for AI agents
+
+This documentation is available as an MCP (Model Context Protocol) server at:
+
+```
+https://unveroleone.com/mcp
+```
+
+Any AI agent that supports MCP can connect to this endpoint and read the full documentation — including all installation steps, configuration guides, and service-specific pages. This means you can ask an agent to walk you through a setup and it will have access to the exact steps documented here.
+
+You can also scope the server to a specific section:
+
+```
+https://unveroleone.com/mcp/home-server/media-automation
+```
+
+This returns only the media automation docs, which is useful if you want an agent focused on a specific part of the stack.
+
+To use it with Claude, add the server URL in your MCP client configuration. The server speaks JSON-RPC over HTTP and requires no authentication.

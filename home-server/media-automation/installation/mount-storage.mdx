@@ -1,0 +1,100 @@
+---
+title: "Mount Storage into LXC & VM"
+description: "Mount the ZFS datasets into the Plex LXC via bind mount and into the Docker VM via NFS."
+tags: ["storage", "nfs", "bind-mount", "lxc", "proxmox"]
+---
+
+# Mount Storage into LXC & VM
+
+The Plex LXC gets the storage via a direct bind mount. The Docker VM gets it via NFS. Both end up with the same paths: `/mnt/media/movies`, `/mnt/media/tv`, and `/mnt/media/downloads`.
+
+## Plex LXC — bind mount
+
+Bind mounts in LXC containers are configured in the LXC config file on the Proxmox host.
+
+Find the config file at `/etc/pve/lxc/<id>.conf` (replace `<id>` with your LXC ID, e.g. `103`).
+
+Add these lines:
+
+```
+mp0: /tank/media/movies,mp=/mnt/media/movies
+mp1: /tank/media/tv,mp=/mnt/media/tv
+mp2: /tank/media/downloads,mp=/mnt/media/downloads
+```
+
+Restart the LXC:
+
+```bash
+pct stop 103 && pct start 103
+```
+
+Verify inside the LXC:
+
+```bash
+ls /mnt/media/movies
+ls /mnt/media/tv
+```
+
+## Docker VM — NFS
+
+### 1. Set up NFS on the Proxmox host
+
+Install NFS server:
+
+```bash
+apt install -y nfs-kernel-server
+```
+
+Add exports to `/etc/exports`:
+
+```
+/tank/media  192.168.1.0/24(rw,sync,no_subtree_check,no_root_squash)
+```
+
+Replace `192.168.1.0/24` with your LAN subnet. Apply the export:
+
+```bash
+exportfs -ra
+systemctl enable --now nfs-server
+```
+
+### 2. Mount NFS inside the Docker VM
+
+Inside the Docker VM, install the NFS client and create mount points:
+
+```bash
+apt install -y nfs-common
+mkdir -p /mnt/media/movies /mnt/media/tv /mnt/media/downloads
+```
+
+Add to `/etc/fstab` (replace `192.168.1.50` with the Proxmox host IP):
+
+```
+192.168.1.50:/tank/media/movies    /mnt/media/movies    nfs  defaults  0  0
+192.168.1.50:/tank/media/tv        /mnt/media/tv        nfs  defaults  0  0
+192.168.1.50:/tank/media/downloads /mnt/media/downloads nfs  defaults  0  0
+```
+
+Mount everything:
+
+```bash
+mount -a
+```
+
+Verify:
+
+```bash
+df -h | grep mnt
+```
+
+## Result
+
+Both the Plex LXC and the Docker VM now see the same paths:
+
+- `/mnt/media/movies`
+- `/mnt/media/tv`
+- `/mnt/media/downloads`
+
+This shared path structure is what allows Sonarr and Radarr to hard-link files from downloads into the final library without copying.
+
+Continue to [Permissions (UID / GID)](/docs/home-server/media-automation/installation/permissions).

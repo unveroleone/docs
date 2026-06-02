@@ -1,0 +1,85 @@
+---
+title: "Configure Sonarr & Radarr"
+description: "Connect Sonarr and Radarr to SABnzbd and set root folders and quality profiles."
+tags: ["sonarr", "radarr", "sabnzbd", "configuration"]
+---
+
+# Configure Sonarr & Radarr
+
+Both Sonarr and Radarr need to know about SABnzbd (to send downloads) and where to put completed media. The steps are the same for both — run through them twice.
+
+## Sonarr
+
+Open Sonarr at `http://<docker-vm-ip>:8989`.
+
+### Add SABnzbd as download client
+
+Go to **Settings → Download Clients → Add**:
+
+| Field | Value |
+|-------|-------|
+| Type | SABnzbd |
+| Host | `sabnzbd` |
+| Port | `8080` |
+| API Key | From SABnzbd → Config → General |
+| Category | `tv` |
+
+Click **Test**, then **Save**.
+
+### Set root folder
+
+Go to **Settings → Media Management → Root Folders** and add `/tv`.
+
+### Check indexers
+
+Go to **Settings → Indexers**. NZBGeek and NinjaCentral should already be there, synced from Prowlarr. If not, go back to the Prowlarr step and check the app connection.
+
+### Quality profile
+
+Go to **Settings → Quality Profiles**. The default **HD-1080p** profile is a good starting point. Adjust resolution and codec preferences based on what your indexers typically have.
+
+---
+
+## Radarr
+
+Open Radarr at `http://<docker-vm-ip>:7878`.
+
+### Add SABnzbd as download client
+
+Go to **Settings → Download Clients → Add**:
+
+| Field | Value |
+|-------|-------|
+| Type | SABnzbd |
+| Host | `sabnzbd` |
+| Port | `8080` |
+| API Key | From SABnzbd → Config → General |
+| Category | `movies` |
+
+Click **Test**, then **Save**.
+
+### Set root folder
+
+Go to **Settings → Media Management → Root Folders** and add `/movies`.
+
+### Check indexers
+
+Same as Sonarr — NZBGeek and NinjaCentral should be synced from Prowlarr.
+
+### Quality profile
+
+**HD-1080p** works well as a default. Radarr also supports upgrading to a better release automatically if one becomes available later.
+
+---
+
+## Test with a real download
+
+Add one movie in Radarr and one show in Sonarr. Wait a few minutes and check:
+
+1. Prowlarr logs for a search attempt
+2. SABnzbd queue for an active download
+3. Radarr/Sonarr history for an import
+
+If the full chain works, move on to Seerr.
+
+Continue to [Configure Seerr](/docs/home-server/media-automation/installation/configure-seerr).

@@ -1,0 +1,80 @@
+---
+title: "Architecture Diagram"
+description: "How the Plex media stack components connect, where data flows, and which paths are shared between services."
+tags: ["architecture", "plex", "proxmox", "zfs", "docker"]
+---
+
+# Architecture Diagram
+
+## Component Overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Proxmox Host                       │
+│                                                         │
+│  ┌──────────────────┐     ┌──────────────────────────┐  │
+│  │   Plex LXC       │     │       Docker VM          │  │
+│  │  (lxc/103)       │     │      (qemu/102)          │  │
+│  │                  │     │                          │  │
+│  │  Plex Media      │     │  Overseerr               │  │
+│  │  Server          │     │  Sonarr   Radarr         │  │
+│  │                  │     │  Prowlarr SABnzbd        │  │
+│  └────────┬─────────┘     └───────────┬──────────────┘  │
+│           │                           │                  │
+│           └──────────┬────────────────┘                  │
+│                      │                                   │
+│         ┌────────────▼────────────┐                      │
+│         │       ZFS Pool (tank)   │                      │
+│         │                         │                      │
+│         │  /mnt/media/movies      │                      │
+│         │  /mnt/media/tv          │                      │
+│         │  /mnt/downloads         │                      │
+│         └─────────────────────────┘                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Data Flow
+
+```
+User
+└─► Overseerr (request)
+    └─► Sonarr / Radarr (pick release, apply quality profile)
+        └─► Prowlarr (search indexers)
+            └─► SABnzbd (download + unpack to /mnt/downloads)
+                └─► Sonarr / Radarr (import → /mnt/media/tv or /mnt/media/movies)
+                    └─► Plex (detects new file, scans library, ready to stream)
+```
+
+## Storage Paths
+
+| Path | Used by | Description |
+|------|---------|-------------|
+| `/mnt/media/movies` | Radarr, Plex | Final movie library |
+| `/mnt/media/tv` | Sonarr, Plex | Final TV show library |
+| `/mnt/downloads` | SABnzbd, Sonarr, Radarr | Download staging area |
+
+All three paths come from the same ZFS pool. Sonarr and Radarr see both `/mnt/downloads` and `/mnt/media` — this is what allows them to use hard links during import instead of copying files.
+
+## VM and LXC IDs
+
+| ID | Type | Service |
+|----|------|---------|
+| `lxc/103` | LXC | Plex Media Server |
+| `lxc/104` | LXC | n8n |
+| `qemu/102` | VM | Docker host — Sonarr, Radarr, SABnzbd, Overseerr |
+| `node/proxmox` | Host | Proxmox VE node |
+
+## Network
+
+All Docker containers run on a shared internal network (`media_net`). They communicate by container name, not by port or IP. The only ports exposed to the LAN are the web UIs of each service.
+
+| Service | LAN Port |
+|---------|----------|
+| Plex | 32400 |
+| Overseerr | 5055 |
+| Sonarr | 8989 |
+| Radarr | 7878 |
+| Prowlarr | 9696 |
+| SABnzbd | 8080 |
+
+None of these are exposed to the internet by default. Remote access to Plex is handled by Plex's own relay service.

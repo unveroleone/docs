@@ -1,0 +1,77 @@
+---
+title: "SABnzbd"
+description: "The Usenet download client. Receives NZBs from Sonarr and Radarr, downloads from your provider, and unpacks completed downloads."
+tags: ["sabnzbd", "docker", "usenet", "download"]
+---
+
+# SABnzbd
+
+SABnzbd is the download client in this stack. Sonarr and Radarr send it NZB files, and SABnzbd handles the actual download from your Usenet provider, verifies the files, and unpacks them. Once a download is complete, it notifies Sonarr or Radarr to begin the import.
+
+## Docker Compose
+
+```yaml
+sabnzbd:
+  image: lscr.io/linuxserver/sabnzbd:latest
+  container_name: sabnzbd
+  environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=Europe/Zurich
+  volumes:
+    - /srv/media-stack/config/sabnzbd:/config
+    - /mnt/media/downloads:/downloads
+  ports:
+    - "8080:8080"
+  networks:
+    - media_net
+  restart: unless-stopped
+```
+
+## Initial Configuration
+
+Open `http://<docker-vm-ip>:8080`.
+
+### 1. Add your Usenet provider
+
+Go to **Config → Servers → Add Server**:
+
+| Field | Value |
+|-------|-------|
+| Host | `news.frugalusenet.com` |
+| Port | `563` |
+| SSL | Yes |
+| Username | Your Frugal Usenet username |
+| Password | Your Frugal Usenet password |
+| Connections | 10–20 (check your plan limit) |
+
+See [Providers](/docs/home-server/media-automation/providers) for more detail on Frugal Usenet.
+
+### 2. Set up categories
+
+Categories tell SABnzbd where to put completed downloads, and they let Sonarr and Radarr identify their own jobs.
+
+Go to **Config → Categories** and add:
+
+| Category | Folder |
+|----------|--------|
+| `movies` | `/downloads/movies` |
+| `tv` | `/downloads/tv` |
+
+In Sonarr and Radarr, set the SABnzbd category to match (`tv` for Sonarr, `movies` for Radarr) when configuring the download client.
+
+### 3. Get the API key
+
+Go to **Config → General** and copy the API key. You need this when adding SABnzbd as a download client in Sonarr and Radarr.
+
+## Completed download handling
+
+SABnzbd moves finished downloads to the category folder and notifies the requesting app. Sonarr or Radarr then picks up the file and imports it into the media library.
+
+Do not delete files from `/downloads` manually. Sonarr and Radarr clean up after a successful import.
+
+## Ports
+
+| Port | Purpose |
+|------|---------|
+| 8080 | SABnzbd web UI |

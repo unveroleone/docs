@@ -1,0 +1,60 @@
+---
+title: "Verification & First Test"
+description: "Run an end-to-end test to confirm the full automation pipeline is working."
+tags: ["verification", "testing", "plex", "automation"]
+---
+
+# Verification & First Test
+
+Run through this checklist to confirm every part of the stack is working before using it regularly.
+
+## Service health check
+
+Open each web UI and verify it loads without errors:
+
+| Service | URL | Expected |
+|---------|-----|----------|
+| SABnzbd | `http://<ip>:8080` | Dashboard loads, no warnings |
+| Prowlarr | `http://<ip>:9696` | Indexers show green status |
+| Sonarr | `http://<ip>:8989` | No system messages in red |
+| Radarr | `http://<ip>:7878` | No system messages in red |
+| Seerr | `http://<ip>:5055` | Shows your Plex libraries |
+| Plex | `http://<plex-ip>:32400/web` | Server appears under your account |
+
+## End-to-end test
+
+### 1. Request something in Seerr
+
+Search for a movie you want and submit a request. If auto-approve is enabled, it goes immediately to Radarr.
+
+### 2. Confirm Radarr received it
+
+In Radarr, go to **Movies** and find the title. Check **History** for a search attempt. It should show "Grabbed" within a few minutes.
+
+### 3. Confirm SABnzbd is downloading
+
+In SABnzbd, the **Queue** tab should show the active download. Watch the download progress.
+
+### 4. Confirm Radarr imports it
+
+When SABnzbd finishes, Radarr picks up the file. In Radarr, check **History** — the entry should change from "Grabbed" to "Imported".
+
+### 5. Confirm Plex has it
+
+Open Plex and go to your Movies library. The movie should appear within a minute of Radarr's import. If Plex was notified correctly, it appears immediately. If not, trigger a manual scan from Plex settings.
+
+## What a successful test looks like
+
+```
+Seerr → request approved
+Radarr → grabbed release via Prowlarr + DrunkenSlug/NZBgeek
+SABnzbd → downloaded and unpacked
+Radarr → imported to /mnt/media/movies
+Plex → scanned and available to stream
+```
+
+If the chain breaks at any step, check the [Troubleshooting](/docs/home-server/media-automation/troubleshooting) page.
+
+## Setup complete
+
+The media stack is fully operational. From this point, the only manual step is requesting content in Seerr — everything else happens automatically.

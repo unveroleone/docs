@@ -1,0 +1,60 @@
+---
+title: "Configure Seerr"
+description: "Connect Seerr to Plex, Sonarr, and Radarr so users can request media from a single interface."
+tags: ["seerr", "plex", "configuration", "requests"]
+---
+
+# Configure Seerr
+
+Seerr is the last piece of the stack. It connects to Plex for authentication and to Sonarr and Radarr for routing requests.
+
+Open Seerr at `http://<docker-vm-ip>:5055`.
+
+## Sign in with Plex
+
+Click **Sign In with Plex** and authenticate with your Plex account. Seerr uses Plex as the identity provider — anyone you share your Plex library with can sign in.
+
+## Connect your Plex server
+
+After signing in, Seerr will ask for your Plex server. It should detect it automatically if Plex is on the same LAN. If not, enter the Plex LXC IP and port `32400` manually.
+
+## Add Radarr
+
+Go to **Settings → Radarr → Add Radarr Server**:
+
+| Field | Value |
+|-------|-------|
+| Hostname | Radarr container IP or `<docker-vm-ip>` |
+| Port | `7878` |
+| API Key | From Radarr → Settings → General |
+| Default Quality Profile | Your chosen profile |
+| Default Root Folder | `/movies` |
+
+Click **Test** and **Save**.
+
+## Add Sonarr
+
+Go to **Settings → Sonarr → Add Sonarr Server**:
+
+| Field | Value |
+|-------|-------|
+| Hostname | Sonarr container IP or `<docker-vm-ip>` |
+| Port | `8989` |
+| API Key | From Sonarr → Settings → General |
+| Default Quality Profile | Your chosen profile |
+| Default Root Folder | `/tv` |
+
+Click **Test** and **Save**.
+
+## Configure request settings
+
+Go to **Settings → General**:
+
+- **Auto-approve**: enable if you want requests to go straight to Sonarr/Radarr without manual review
+- **Request limit**: optionally set per-user limits to prevent excessive requests
+
+## Result
+
+Seerr is connected to Plex, Radarr, and Sonarr. Any Plex user with access can now go to Seerr, search for a title, and request it. The request flows automatically through the rest of the stack.
+
+Continue to [Verification & First Test](/docs/home-server/media-automation/installation/verification).

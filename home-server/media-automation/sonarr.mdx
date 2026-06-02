@@ -1,0 +1,79 @@
+---
+title: "Sonarr"
+description: "TV show automation: monitors, searches, downloads, and organizes TV episodes automatically."
+tags: ["sonarr", "docker", "tv", "automation"]
+---
+
+# Sonarr
+
+Sonarr manages TV shows. Add a series, set a quality profile, and Sonarr monitors for new episodes, grabs them via SABnzbd, and imports them into your library once downloaded.
+
+## Docker Compose
+
+```yaml
+sonarr:
+  image: lscr.io/linuxserver/sonarr:latest
+  container_name: sonarr
+  environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=Europe/Zurich
+  volumes:
+    - /srv/media-stack/config/sonarr:/config
+    - /mnt/media/tv:/tv
+    - /mnt/media/downloads:/downloads
+  ports:
+    - "8989:8989"
+  networks:
+    - media_net
+  restart: unless-stopped
+```
+
+Both `/tv` and `/downloads` must be visible inside the container. This is what allows Sonarr to hard-link files during import instead of copying them.
+
+## Initial Configuration
+
+Open `http://<docker-vm-ip>:8989`.
+
+### 1. Add SABnzbd as download client
+
+Go to **Settings → Download Clients → Add**:
+
+| Field | Value |
+|-------|-------|
+| Type | SABnzbd |
+| Host | `sabnzbd` (container name) |
+| Port | `8080` |
+| API Key | From SABnzbd → Config → General |
+| Category | `tv` |
+
+### 2. Connect Prowlarr
+
+Prowlarr syncs indexers to Sonarr automatically via an API connection. Go to **Settings → Indexers** — you should see your indexers appear there after configuring the connection in Prowlarr.
+
+Alternatively, add Prowlarr manually:
+
+Go to **Settings → Indexers → Add → Prowlarr**:
+
+| Field | Value |
+|-------|-------|
+| Prowlarr Server | `http://prowlarr:9696` |
+| API Key | From Prowlarr → Settings → General |
+
+### 3. Set root folder
+
+Go to **Settings → Media Management → Root Folders** and add `/tv`.
+
+### 4. Configure quality profiles
+
+Go to **Settings → Quality Profiles**. The default profiles work fine to start. You can tighten them once you know what your indexers have available.
+
+## Adding shows
+
+Use the **Series** tab to search for and add shows. Sonarr will immediately search for any existing episodes and monitor for future ones.
+
+## Ports
+
+| Port | Purpose |
+|------|---------|
+| 8989 | Sonarr web UI |

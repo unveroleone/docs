@@ -1,0 +1,81 @@
+---
+title: "Create Plex LXC"
+description: "Create the Debian LXC container that will run Plex Media Server on Proxmox."
+tags: ["plex", "lxc", "proxmox", "debian"]
+---
+
+# Create Plex LXC
+
+Plex runs in a dedicated Debian LXC container. LXCs have lower overhead than full VMs, give Plex direct access to the ZFS storage via bind mounts, and make GPU passthrough easier to configure.
+
+## Download the Debian template
+
+In the Proxmox UI, go to:
+
+`local (proxmox)` → `CT Templates` → `Templates`
+
+Search for **Debian** and download the latest available template.
+
+![Download Debian template](/assets/docs/template.png)
+
+## Create the container
+
+Click **Create CT** in the top right. Configure it as follows:
+
+**General**
+- Hostname: e.g. `plex`
+- Password: set a secure root password
+- Unprivileged container: **Yes**
+- Nesting: **Yes** (required)
+
+![General settings](/assets/docs/template1.png)
+
+**Template**
+- Select the Debian template you just downloaded
+
+![Template selection](/assets/docs/template2.png)
+
+**Disks**
+- Storage: local-lvm (or your preferred storage)
+- Disk size: **32 GB**
+
+![Disk settings](/assets/docs/template3.png)
+
+**CPU**
+- Cores: **2–4**
+
+![CPU settings](/assets/docs/template4.png)
+
+**Memory**
+- RAM: **2048 MB**
+- Swap: **512 MB**
+
+![Memory settings](/assets/docs/template5.png)
+
+**Network**
+- Leave as default (DHCP or set a static IP)
+
+**DNS**
+- Leave as default
+
+Review and click **Finish**.
+
+## Start the container
+
+Select the new LXC in the Proxmox sidebar and click **Start**. Open the console to verify it boots correctly.
+
+## Why not Docker for Plex?
+
+Plex in an LXC has a few advantages over running it in the Docker VM:
+
+- Direct bind mount to ZFS storage without going through NFS
+- Simpler GPU/iGPU passthrough at the Proxmox level
+- Independent restart cycle from the automation stack
+
+The result is faster media access and simpler maintenance.
+
+## Next step
+
+The LXC is now running with Debian, but Plex is not installed yet. Storage is not mounted yet either. Continue to [Create Docker VM](/docs/home-server/media-automation/installation/create-docker-vm).
+
+Plex installation happens later in [Install & Configure Plex](/docs/home-server/media-automation/installation/install-plex), after storage is set up.

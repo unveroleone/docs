@@ -1,0 +1,42 @@
+---
+title: "Lessons Learned"
+description: "Things that went wrong during the setup and what fixed them."
+tags: ["lessons", "troubleshooting", "setup"]
+---
+
+# Lessons Learned
+
+Real issues that came up during setup and what solved them.
+
+## Path consistency is the most common failure point
+
+The single most frequent problem during initial setup: Sonarr, Radarr, and SABnzbd all need to see the same paths inside their containers. Even if the physical files are in the right place, a path mismatch causes imports to fail silently with no useful error.
+
+The fix is to use the same volume mounts across all containers and test with a manual download before trusting the automation.
+
+## Permissions break everything, quietly
+
+When the config directories on the host are owned by `root` instead of `1000:1000`, services start and appear healthy but fail when they try to write anything. Setting `PUID=1000 PGID=1000` in the Docker environment is not enough if the host directory is wrong.
+
+Always create config directories explicitly and set ownership before first run:
+
+```bash
+mkdir -p /srv/media-stack/config/{sonarr,radarr,prowlarr,sabnzbd,overseerr}
+chown -R 1000:1000 /srv/media-stack/config/
+```
+
+## Hard links require a single filesystem
+
+Setting up downloads and media on separate disks (or separate ZFS pools) breaks hard links. Sonarr and Radarr fall back to copying files, which doubles disk usage during import and is much slower.
+
+The solution is to keep all paths — downloads and final media — on the same ZFS pool, even if they are different datasets.
+
+## Plex LXC vs Docker
+
+An early version of this setup ran Plex inside Docker alongside the other services. This worked but caused GPU passthrough to be complicated and tied Plex's availability to Docker restarts.
+
+Moving Plex to a dedicated LXC solved both problems. The LXC has direct access to storage via bind mounts, and GPU passthrough is handled at the Proxmox level with a few config lines.
+
+---
+
+*Have something to add? This page is a living document.*

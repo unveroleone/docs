@@ -1,0 +1,77 @@
+---
+title: "Radarr"
+description: "Movie automation: monitors, searches, downloads, and organizes movies automatically."
+tags: ["radarr", "docker", "movies", "automation"]
+---
+
+# Radarr
+
+Radarr does for movies what Sonarr does for TV shows. Add a movie, set a quality profile, and Radarr finds a release, sends the NZB to SABnzbd, and imports the file once downloaded.
+
+## Docker Compose
+
+```yaml
+radarr:
+  image: lscr.io/linuxserver/radarr:latest
+  container_name: radarr
+  environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=Europe/Zurich
+  volumes:
+    - /srv/media-stack/config/radarr:/config
+    - /mnt/media/movies:/movies
+    - /mnt/media/downloads:/downloads
+  ports:
+    - "7878:7878"
+  networks:
+    - media_net
+  restart: unless-stopped
+```
+
+Both `/movies` and `/downloads` must be visible inside the container — same reason as Sonarr: hard links during import only work when both paths are on the same filesystem.
+
+## Initial Configuration
+
+Open `http://<docker-vm-ip>:7878`.
+
+### 1. Add SABnzbd as download client
+
+Go to **Settings → Download Clients → Add**:
+
+| Field | Value |
+|-------|-------|
+| Type | SABnzbd |
+| Host | `sabnzbd` (container name) |
+| Port | `8080` |
+| API Key | From SABnzbd → Config → General |
+| Category | `movies` |
+
+### 2. Connect Prowlarr
+
+Prowlarr syncs indexers to Radarr automatically. After configuring the connection in Prowlarr, your indexers appear under **Settings → Indexers** in Radarr.
+
+To add manually:
+
+| Field | Value |
+|-------|-------|
+| Prowlarr Server | `http://prowlarr:9696` |
+| API Key | From Prowlarr → Settings → General |
+
+### 3. Set root folder
+
+Go to **Settings → Media Management → Root Folders** and add `/movies`.
+
+### 4. Configure quality profiles
+
+The built-in profiles are a reasonable starting point. Adjust based on what your indexers consistently have available — overly strict profiles cause Radarr to sit idle on searches.
+
+## Adding movies
+
+Use the **Movies** tab to search and add titles. You can also add movies in bulk via **Movies → Discover → Add from Lists** if you want to import a watchlist.
+
+## Ports
+
+| Port | Purpose |
+|------|---------|
+| 7878 | Radarr web UI |

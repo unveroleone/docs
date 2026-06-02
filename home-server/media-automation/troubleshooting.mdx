@@ -1,0 +1,98 @@
+---
+title: "Troubleshooting"
+description: "Common problems in the Plex media stack and how to fix them."
+tags: ["troubleshooting", "plex", "sonarr", "radarr", "sabnzbd"]
+---
+
+# Troubleshooting
+
+## Sonarr or Radarr is not importing completed downloads
+
+This is almost always a path or permission issue.
+
+**Check paths.** Sonarr/Radarr and SABnzbd must see the same download directory. Inside their containers, `/downloads` must point to the same physical path on disk. If SABnzbd sees `/mnt/media/downloads` but Sonarr sees `/downloads`, the import will fail silently.
+
+Verify in each service:
+- SABnzbd: **Config → Folders → Temporary Download Folder** — should be inside `/downloads`
+- Sonarr/Radarr: **Settings → Download Clients → SABnzbd** — check the Remote Path Mappings if needed
+
+**Check permissions.** All services run as `PUID=1000 PGID=1000`. The download directory on the host must be writable by that UID. Check with:
+
+```bash
+ls -la /mnt/media/downloads
+```
+
+Fix ownership if needed:
+
+```bash
+chown -R 1000:1000 /mnt/media/downloads
+```
+
+---
+
+## Nothing downloads after a request in Seerr
+
+**Check that Seerr sent the request.** Go to **Seerr → Requests** and confirm the request appears with a status other than "Pending".
+
+**Check Sonarr or Radarr for the item.** Open the movie or series in Radarr/Sonarr and check the **History** tab. If there is a search attempt with no result, the indexers returned nothing for that quality profile.
+
+**Loosen the quality profile.** In Sonarr or Radarr, go to **Settings → Quality Profiles** and check whether the profile is too restrictive. If only 4K releases are allowed but none are indexed, nothing will download.
+
+**Check Prowlarr indexers.** Go to **Prowlarr → Indexers** and run a manual search. If an indexer shows errors, your API key may have expired or the indexer site may be down.
+
+---
+
+## Plex does not see new files
+
+**Check library paths.** In Plex, go to **Settings → Libraries** and confirm the library is pointing to the correct path (`/mnt/media/movies` or `/mnt/media/tv`).
+
+**Trigger a manual scan.** Click the three dots next to a library and select **Scan Library Files**. If the file shows up after a manual scan but not automatically, check that the `plex` user in the LXC has read access to the storage path.
+
+**Check that Sonarr/Radarr is notifying Plex.** In Sonarr, go to **Settings → Connect** and verify the Plex connection is configured and tested successfully. Radarr has the same setting.
+
+---
+
+## SABnzbd downloads are stuck or failing
+
+**Check your provider connection.** Go to **Config → Servers** and click **Test Server**. If it fails, your provider may be having issues or your credentials changed.
+
+**Check your download speed.** If speeds are unexpectedly low, reduce the number of connections and test again. Some providers throttle when too many connections are opened simultaneously.
+
+**Check available disk space.** SABnzbd will pause downloads when disk space runs low. Check with:
+
+```bash
+df -h /mnt/media/downloads
+```
+
+---
+
+## A container is crashing or not starting
+
+Check logs with:
+
+```bash
+docker logs <container-name>
+```
+
+For Plex in the LXC:
+
+```bash
+journalctl -u plexmediaserver -n 50
+```
+
+Most startup failures are caused by a config volume that is owned by root instead of `PUID=1000`.
+
+---
+
+## Hard links are not working
+
+Hard links only work when source and destination are on the same filesystem. If `/downloads` and `/mnt/media` are on different disks or different ZFS datasets that are not on the same pool, Sonarr and Radarr will copy files instead of linking them.
+
+To verify: after a successful import, check if the file in `/mnt/media` and the original in `/downloads` share the same inode:
+
+```bash
+stat /mnt/media/movies/SomeMovie/SomeMovie.mkv
+stat /mnt/media/downloads/SomeMovie.mkv
+```
+
+If the inode numbers match, hard links are working.

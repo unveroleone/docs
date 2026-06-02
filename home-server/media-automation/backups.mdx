@@ -1,0 +1,63 @@
+---
+title: "Backups"
+description: "What to back up in the Plex media stack, and how to restore it after a failure."
+tags: ["backups", "docker", "plex", "maintenance"]
+---
+
+# Backups
+
+Media files are large and can be re-downloaded. What matters to back up is configuration — the settings, history, and metadata that took time to build up.
+
+## What to back up
+
+### Docker service configs
+
+All Docker service configs are stored in `/srv/media-stack/config/`. This directory contains the application data for Sonarr, Radarr, Prowlarr, SABnzbd, and Overseerr.
+
+```
+/srv/media-stack/config/
+├── sonarr/
+├── radarr/
+├── prowlarr/
+├── sabnzbd/
+└── overseerr/
+```
+
+Back up this entire directory. A simple `tar` to a network share or an external disk is enough:
+
+```bash
+tar -czf /backup/media-stack-config-$(date +%Y%m%d).tar.gz /srv/media-stack/config/
+```
+
+Stop the containers before backing up if you want a consistent snapshot:
+
+```bash
+docker compose stop
+tar -czf /backup/media-stack-config-$(date +%Y%m%d).tar.gz /srv/media-stack/config/
+docker compose start
+```
+
+### Plex metadata
+
+Plex stores its metadata (thumbnails, watch history, playlists) in `/var/lib/plexmediaserver/`. This directory can grow large over time.
+
+Back it up with:
+
+```bash
+systemctl stop plexmediaserver
+tar -czf /backup/plex-metadata-$(date +%Y%m%d).tar.gz /var/lib/plexmediaserver/
+systemctl start plexmediaserver
+```
+
+If you lose this and need to recover, Plex will re-scan your libraries and re-download metadata from the internet. Watch history and playlists will be gone, but everything else rebuilds automatically.
+
+## What not to bother backing up
+
+- Media files (`/mnt/media/movies`, `/mnt/media/tv`) — re-downloadable through Sonarr/Radarr
+- Download staging area (`/mnt/downloads`) — in-progress downloads are expendable
+
+## Proxmox-level backups
+
+Proxmox has a built-in backup tool under **Datacenter → Backup**. You can schedule full backups of the Docker VM and the Plex LXC directly from there. This is the most complete option and covers everything, including the OS configuration.
+
+Store Proxmox backups on a separate disk or NAS — not on the same ZFS pool as your media.

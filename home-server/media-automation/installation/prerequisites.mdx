@@ -1,0 +1,68 @@
+---
+title: "Prerequisites"
+description: "Hardware, software, and accounts you need before starting the media stack installation."
+tags: ["prerequisites", "hardware", "proxmox", "usenet"]
+---
+
+# Prerequisites
+
+Get everything on this list ready before starting. Skipping items here causes problems later that are harder to debug mid-installation.
+
+## Hardware
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| CPU | x86_64, 4 cores | 6+ cores |
+| RAM | 16 GB | 32 GB (especially with ZFS) |
+| System disk | SSD/NVMe | NVMe (Proxmox + VM OS) |
+| Data disks | 2 disks for ZFS mirror | 2× HDD or SSD |
+| Network | Gigabit Ethernet | Gigabit Ethernet (no WiFi) |
+
+A GPU or iGPU (Intel Quick Sync or AMD) is optional but needed for Plex hardware transcoding. This requires Plex Pass.
+
+## Proxmox
+
+- Proxmox VE 8.x installed on bare metal
+- Updated to the latest minor release (`apt update && apt upgrade`)
+- LXC and VM support working
+- ZFS support enabled (included in PVE by default)
+- Web UI accessible at `https://<host-ip>:8006`
+
+You should be comfortable with the Proxmox UI, basic Linux CLI, and creating VMs and LXCs.
+
+## Network
+
+This setup assumes a simple flat LAN:
+
+- One subnet (e.g. `192.168.1.0/24`)
+- Static IPs or DHCP reservations for the Proxmox host, Plex LXC, and Docker VM
+- No VLANs required
+
+Remote access to Plex is handled by Plex's own relay. All other services (Sonarr, Radarr, Overseerr, etc.) are LAN-only by default.
+
+## Disk layout
+
+You need at least two physical disks for the ZFS pool (mirror). The system disk (Proxmox OS) must be separate from the data disks.
+
+Example layout used in this documentation:
+
+| Disk | Purpose |
+|------|---------|
+| `/dev/sda` | Proxmox OS (system) |
+| `/dev/sdb` | ZFS pool disk 1 (data) |
+| `/dev/sdc` | ZFS pool disk 2 (data, mirror) |
+
+The ZFS pool name used throughout: `tank`.
+
+## Accounts
+
+Create these before starting:
+
+| Account | Where | Notes |
+|---------|-------|-------|
+| Plex account | `plex.tv` | Free account is enough; Plex Pass needed for hardware transcoding |
+| Usenet provider | `frugalusenet.com` | Keep credentials ready for SABnzbd |
+| Indexer — NZBGeek | `nzbgeek.info` | API key needed for Prowlarr |
+| Indexer — NinjaCentral | `ninjacentral.co.za` | API key needed for Prowlarr |
+
+Store credentials securely before you start. You will need them at multiple points during setup.

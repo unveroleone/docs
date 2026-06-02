@@ -1,0 +1,84 @@
+---
+title: "Proxmox Host Preparation"
+description: "Minimal preparation steps on the Proxmox host before creating LXCs, VMs, and the ZFS storage pool."
+tags: ["proxmox", "setup", "iommu", "network"]
+---
+
+# Proxmox Host Preparation
+
+This covers the minimal steps on the Proxmox host before creating any VMs or LXCs.
+
+## Update the system
+
+After installing Proxmox VE, update it fully before doing anything else:
+
+```bash
+apt update && apt upgrade -y
+```
+
+No additional Proxmox plugins or repositories are needed for this setup.
+
+## Verify the network bridge
+
+The default bridge `vmbr0` is used for all LXCs and VMs. Verify it is connected to your main LAN interface:
+
+Go to **Proxmox UI → Node → Network** and confirm `vmbr0` shows your physical interface as its bridge port.
+
+All LXCs and VMs in this setup use `vmbr0`. No VLAN configuration is required.
+
+## Identify data disks
+
+Before creating the ZFS pool, identify which disks will be used for data:
+
+```bash
+lsblk
+```
+
+Or check in the Proxmox UI under **Node → Disks**.
+
+Make sure the data disks are empty. Any existing data will be destroyed when the ZFS pool is created.
+
+Keep the system disk (Proxmox OS) separate from data disks.
+
+## Optional: iGPU passthrough preparation
+
+Only needed if you plan to use hardware transcoding in Plex.
+
+**1. Enable IOMMU in BIOS**
+
+- Intel: enable **VT-d**
+- AMD: enable **AMD-Vi**
+
+**2. Enable IOMMU in the Proxmox kernel**
+
+Edit `/etc/default/grub` and add `intel_iommu=on` (or `amd_iommu=on`) to `GRUB_CMDLINE_LINUX_DEFAULT`:
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt"
+```
+
+Then update grub and reboot:
+
+```bash
+update-grub
+reboot
+```
+
+**3. Verify**
+
+After reboot:
+
+```bash
+dmesg | grep -e DMAR -e IOMMU
+```
+
+You should see lines indicating IOMMU is enabled. The actual GPU passthrough configuration happens later in the Plex LXC step.
+
+## Result
+
+At this point:
+
+- Proxmox host is updated and running
+- Network bridge is verified
+- Data disks are identified
+- IOMMU enabled (if GPU transcoding is planned)

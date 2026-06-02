@@ -1,0 +1,55 @@
+---
+title: "Glossary"
+description: "Definitions of the key terms used throughout the Plex media automation documentation."
+tags: ["glossary", "usenet", "plex", "reference"]
+---
+
+# Glossary
+
+## NZB
+
+A file that describes where to find a Usenet post. It contains the article IDs and group names needed to download a specific release. NZBs are small — the actual content is on the Usenet servers.
+
+## Usenet
+
+A decentralized network of servers that stores binary files (among other things). Older than the web. Content on Usenet is hosted by providers and has a retention period, after which it expires. Access requires a paid subscription to a provider.
+
+## Indexer
+
+A website that indexes Usenet posts and provides a searchable database. When Sonarr or Radarr looks for a release, it searches your indexers. Indexers return NZB files, which SABnzbd uses to download the actual content.
+
+## Provider
+
+A company that gives you access to Usenet servers to download content. You need both an indexer (to find NZBs) and a provider (to download them).
+
+## LXC (Linux Container)
+
+A lightweight virtualization technology in Proxmox that shares the host kernel. LXCs use less memory and CPU than full VMs. Plex runs in an LXC to keep it close to the storage layer with minimal overhead.
+
+## ZFS
+
+A filesystem that combines volume management, data integrity checks, and snapshotting. Used here for the media storage pool (`tank`). ZFS mirrors protect against a single disk failure.
+
+## Bind mount
+
+A way to expose a directory from the Proxmox host (or a ZFS dataset) inside an LXC or VM, without going through a network protocol. Used to give the Plex LXC direct access to the ZFS media datasets.
+
+## Hard link
+
+A filesystem feature where two filenames point to the same data on disk. When Sonarr or Radarr imports a download, it can hard-link the file from `/downloads` to `/mnt/media` instead of copying it. No extra disk space is used. Hard links only work within the same filesystem.
+
+## Quality profile
+
+A Sonarr/Radarr setting that defines which release formats are acceptable for a given title — resolution (720p, 1080p, 4K), codec (x264, x265, AV1), source (WEB-DL, Blu-ray), and size limits. If no available release matches the profile, nothing downloads.
+
+## PUID / PGID
+
+The user and group IDs used to run processes inside Docker containers (`linuxserver.io` images). Setting `PUID=1000` and `PGID=1000` makes the container process run as the same user as your regular Linux account, which avoids permission conflicts on mounted volumes.
+
+## Retention
+
+How long a Usenet provider keeps content on their servers. A provider with 3,000-day retention can provide content posted up to ~8 years ago.
+
+## Claim token
+
+A one-time token from `plex.tv/claim` used to associate a new Plex Media Server with your Plex account. It expires after 4 minutes.

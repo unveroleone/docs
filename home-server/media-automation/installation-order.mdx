@@ -1,0 +1,25 @@
+---
+title: "Installation Order"
+description: "The correct sequence for setting up the Plex media automation stack from scratch."
+tags: ["installation", "overview"]
+---
+
+# Installation Order
+
+Follow this sequence. Each step depends on the previous one being done correctly.
+
+1. [Prepare Proxmox host and disks](/docs/home-server/media-automation/installation/proxmox-host-preparation)
+2. [Create Plex LXC](/docs/home-server/media-automation/installation/create-plex-lxc)
+3. [Create Docker VM](/docs/home-server/media-automation/installation/create-docker-vm)
+4. [Create ZFS pool and datasets](/docs/home-server/media-automation/installation/create-zfs-pool)
+5. [Mount storage into LXC and VM](/docs/home-server/media-automation/installation/mount-storage)
+6. [Align UID/GID permissions](/docs/home-server/media-automation/installation/permissions)
+7. [Deploy Docker Compose stack](/docs/home-server/media-automation/installation/deploy-docker-compose)
+8. [Install and configure Plex](/docs/home-server/media-automation/installation/install-plex)
+9. [Configure Download Client (SABnzbd)](/docs/home-server/media-automation/installation/configure-sabnzbd)
+10. [Configure Indexers (Prowlarr)](/docs/home-server/media-automation/installation/configure-prowlarr)
+11. [Configure Sonarr and Radarr](/docs/home-server/media-automation/installation/configure-sonarr-radarr)
+12. [Configure Seerr](/docs/home-server/media-automation/installation/configure-seerr)
+13. [Verification and first test](/docs/home-server/media-automation/installation/verification)
+
+Start with [Prerequisites](/docs/home-server/media-automation/installation/prerequisites) if this is a fresh setup.

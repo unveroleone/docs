@@ -1,0 +1,66 @@
+---
+title: "Updates"
+description: "How to update the Docker-based automation stack and the Plex LXC to their latest versions."
+tags: ["updates", "docker", "plex", "maintenance"]
+---
+
+# Updates
+
+## Docker stack (Sonarr, Radarr, Prowlarr, SABnzbd, Overseerr)
+
+All automation services use `lscr.io/linuxserver/*` images tagged as `latest`. To update them:
+
+```bash
+cd /path/to/your/docker-compose
+docker compose pull
+docker compose up -d
+```
+
+This pulls the latest image for each service and recreates any containers whose image changed. Containers that are already on the latest image are left untouched.
+
+Config data lives in `/srv/media-stack/config/` and persists across updates because it is mounted as a volume.
+
+### Automating updates with Watchtower
+
+If you want automatic updates without manual intervention, you can run [Watchtower](https://containrrr.dev/watchtower/) as an additional container. It monitors your running containers and pulls new images on a schedule.
+
+```yaml
+watchtower:
+  image: containrrr/watchtower
+  container_name: watchtower
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  environment:
+    - WATCHTOWER_SCHEDULE=0 0 4 * * *
+    - WATCHTOWER_CLEANUP=true
+  restart: unless-stopped
+```
+
+This runs the update check daily at 04:00 and removes old images after updating.
+
+## Plex (LXC)
+
+Plex Media Server on Debian is updated through `apt`:
+
+```bash
+apt update
+apt install --only-upgrade plexmediaserver
+```
+
+Plex restarts automatically after the upgrade. Active streams may be interrupted briefly.
+
+To check the currently installed version:
+
+```bash
+dpkg -l plexmediaserver
+```
+
+## Proxmox host
+
+Keep the Proxmox host itself updated separately:
+
+```bash
+apt update && apt upgrade -y
+```
+
+Check the [Proxmox changelog](https://www.proxmox.com/en/downloads/proxmox-virtual-environment/changelog) before major version upgrades.

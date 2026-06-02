@@ -1,0 +1,80 @@
+---
+title: "Seerr"
+description: "What Seerr is, the rebranding from Overseerr and Jellyseerr, and how it fits into this stack."
+tags: ["seerr", "overseerr", "jellyseerr", "requests", "plex"]
+---
+
+# Seerr
+
+Seerr is a request management interface for Plex (and optionally Jellyfin or Emby). It lets you — and anyone you share your server with — search for movies and TV shows and submit requests. Those requests go directly to Radarr or Sonarr, which pick up the download from there.
+
+It uses Plex accounts for authentication, so any Plex user you share your library with can log in without a separate account.
+
+## Background: from Overseerr and Jellyseerr to Seerr
+
+In February 2026, the Overseerr and Jellyseerr teams merged into a single project called **Seerr**. The combined codebase includes all existing Overseerr features plus the Jellyfin and Emby support that was previously only in Jellyseerr.
+
+For my setup (Plex-only), nothing changed functionally. The Docker image changed and the container name updated — that's it.
+
+## Migration from Overseerr
+
+No manual data migration is needed. When you start Seerr for the first time, it automatically migrates your existing Overseerr configuration.
+
+Before doing anything, take a backup of your config folder.
+
+### Docker Compose changes
+
+The key changes from the old Overseerr image:
+
+- Image is now `ghcr.io/seerr-team/seerr:latest`
+- `init: true` is required — the container no longer includes an init process
+- The container runs as `node` (UID 1000) instead of root — remove any `user:` directive you had set
+- Fix permissions on your config folder before starting
+
+**Fix config folder permissions:**
+
+```bash
+docker run --rm -v /path/to/appdata/config:/data alpine chown -R 1000:1000 /data
+```
+
+**Updated Docker Compose service:**
+
+```yaml
+services:
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Europe/Zurich
+    ports:
+      - 5055:5055
+    volumes:
+      - /path/to/appdata/config:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+```
+
+After updating the compose file and fixing permissions, run `docker compose up -d`. Check the container logs to confirm the migration completed before using the UI.
+
+## Why Seerr
+
+The main alternative workflow is adding titles directly in Sonarr or Radarr, which works but requires giving people access to those UIs. Seerr gives non-technical users a clean, streaming-app-style interface and keeps the download services behind the scenes.
+
+Request approval can be set to automatic, or you can review and approve requests manually. Per-user request limits are also available.
+
+## Alternatives
+
+**Ombi** is the older option in this space. It supports Plex, Jellyfin, and Emby, but the UI is less polished and development has slowed significantly.
+
+## Where to go next
+
+Setup steps are in the Installation section:
+
+- [Configure Seerr](/docs/home-server/media-automation/installation/configure-seerr) — connecting to Plex, Sonarr, and Radarr

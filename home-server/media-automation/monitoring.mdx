@@ -1,0 +1,96 @@
+---
+title: "Monitoring"
+description: "How the home server is monitored using Prometheus, Grafana, and Telegram alerts."
+tags: ["monitoring", "prometheus", "grafana", "telegram", "proxmox"]
+---
+
+# Monitoring
+
+The home server uses a Prometheus + Grafana stack running in a dedicated Docker LXC. It collects metrics from all VMs and LXCs via `node_exporter`, queries the Proxmox API via `pve-exporter`, and sends alerts to a Telegram bot when something goes wrong.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Proxmox Host (192.168.1.50)         │
+│                                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
+│  │  Plex LXC    │  │  n8n LXC     │  │ Docker VM │  │
+│  │  :9100       │  │  :9100       │  │  :9100    │  │
+│  └──────┬───────┘  └──────┬───────┘  └─────┬─────┘  │
+│         │                 │                │         │
+│  ┌──────▼─────────────────▼────────────────▼──────┐  │
+│  │            Monitoring LXC (Docker)              │  │
+│  │                                                  │  │
+│  │  pve-exporter ◄── Proxmox API :8006             │  │
+│  │  Prometheus ◄── node_exporter (each VM/LXC)     │  │
+│  │  Grafana ──── Alerts ──► Telegram               │  │
+│  └──────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+## Components
+
+| Service | Port | Role |
+|---------|------|------|
+| Prometheus | 9090 | Metrics collection and storage |
+| Grafana | 3000 | Dashboards and alert rules |
+| pve-exporter | 9221 | Proxmox API metrics |
+| node_exporter | 9100 | Per-VM/LXC system metrics |
+
+All ports are LAN-only. Do not expose them to the internet — use a Cloudflare Tunnel in front of Grafana if you need remote access.
+
+## Proxmox API access
+
+A dedicated read-only Proxmox user is used for `pve-exporter`:
+
+| Property | Value |
+|----------|-------|
+| Username | `pve-exporter@pve` |
+| Role | `PVEAuditor` (read-only) |
+| Auth method | API Token |
+| Token name | `monitoring-token` |
+
+Using a dedicated user avoids using `root` credentials in the monitoring stack.
+
+## node_exporter
+
+`node_exporter` runs on each VM and LXC, exposing system metrics on port `:9100`. Prometheus scrapes it every 30 seconds.
+
+Install on Debian/Ubuntu:
+
+```bash
+apt install -y prometheus-node-exporter
+systemctl enable --now prometheus-node-exporter
+```
+
+Add each host to the Prometheus scrape config:
+
+```yaml
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets:
+          - '192.168.1.x:9100'  # Plex LXC
+          - '192.168.1.y:9100'  # Docker VM
+          - '192.168.1.z:9100'  # n8n LXC
+```
+
+## Grafana alerts
+
+Alerts are configured in Grafana and delivered via a Telegram bot. When an alert fires (high CPU, disk nearly full, service down), a message appears in the Telegram channel.
+
+To set up the Telegram contact point in Grafana:
+
+1. Create a Telegram bot via `@BotFather` and copy the token
+2. Get your chat ID from `@userinfobot`
+3. Go to **Grafana → Alerting → Contact Points → Add** and configure Telegram
+
+## VM / LXC reference
+
+| ID | Type | Service |
+|----|------|---------|
+| lxc/103 | LXC | Plex Media Server |
+| lxc/104 | LXC | n8n |
+| qemu/102 | VM | Docker host |
+| node/proxmox | Host | Proxmox VE node |

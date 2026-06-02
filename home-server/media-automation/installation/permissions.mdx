@@ -1,0 +1,85 @@
+---
+title: "Permissions (UID / GID)"
+description: "Align user and group IDs across the Plex LXC and Docker containers so all services can read and write to shared storage."
+tags: ["permissions", "uid", "gid", "docker", "lxc"]
+---
+
+# Permissions (UID / GID)
+
+This is the step most people skip, and it causes the most problems. All services — Plex, Sonarr, Radarr, SABnzbd, and Overseerr — need to read and write to the same storage paths. For this to work without permission errors, they all need to run as the same UID and GID.
+
+This setup uses `UID=1000` and `GID=1000` everywhere.
+
+## Docker containers
+
+All `linuxserver.io` Docker images accept `PUID` and `PGID` environment variables. These are already set in the `docker-compose.yml`:
+
+```yaml
+environment:
+  - PUID=1000
+  - PGID=1000
+```
+
+This makes the container process run as UID 1000, which matches the ownership of the mounted storage paths.
+
+## Config directories on the Docker VM
+
+Make sure the config directory on the host is owned by `1000:1000`:
+
+```bash
+chown -R 1000:1000 /srv/media-stack/config/
+```
+
+## Storage paths
+
+The ZFS datasets and the NFS mounts need to be owned by `1000:1000` as well.
+
+On the Proxmox host:
+
+```bash
+chown -R 1000:1000 /tank/media/
+```
+
+Verify:
+
+```bash
+ls -la /tank/media/
+```
+
+All directories should show `1000 1000` as owner and group.
+
+## Plex LXC
+
+Inside the Plex LXC, Plex Media Server runs as the `plex` user. Check its UID:
+
+```bash
+id plex
+```
+
+If it is not `1000`, the bind-mounted storage paths will not be writable by Plex. Remap the user:
+
+```bash
+usermod -u 1000 plex
+groupmod -g 1000 plex
+```
+
+Then fix ownership of Plex's own data directory:
+
+```bash
+chown -R plex:plex /var/lib/plexmediaserver/
+```
+
+## Verification
+
+After setting permissions, verify from inside each container that the storage paths are writable:
+
+```bash
+# Inside the Docker VM
+docker exec -it sonarr touch /tv/test && rm /tv/test && echo "OK"
+docker exec -it radarr touch /movies/test && rm /movies/test && echo "OK"
+docker exec -it sabnzbd touch /downloads/test && rm /downloads/test && echo "OK"
+```
+
+All three should print `OK`. If any fail with a permission error, re-check the ownership on the mounted paths.
+
+Continue to [Deploy Docker Compose Stack](/docs/home-server/media-automation/installation/deploy-docker-compose).

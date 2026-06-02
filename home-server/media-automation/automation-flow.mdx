@@ -1,0 +1,51 @@
+---
+title: "Automation Flow"
+description: "What happens from the moment you request a movie or show to the moment it appears in Plex."
+tags: ["automation", "plex", "sonarr", "radarr", "sabnzbd"]
+---
+
+# Automation Flow
+
+Once everything is configured, the entire process from request to playback runs without any manual steps.
+
+## Step 1 — Request
+
+You (or another user) open **Seerr** and search for a movie or TV show.
+
+Requests can be set to auto-approve, or require admin approval first. Once approved, Seerr sends the request to **Radarr** (for movies) or **Sonarr** (for TV shows).
+
+## Step 2 — Search
+
+Sonarr or Radarr receives the request and looks for a matching release.
+
+It searches through the indexers synced from **Prowlarr** and filters results against your quality profile — resolution, codec, size limits. Once a suitable release is found, it sends the NZB file to **SABnzbd**.
+
+## Step 3 — Download
+
+**SABnzbd** downloads the content from Usenet and unpacks it.
+
+Files land in `/mnt/downloads`. SABnzbd notifies Sonarr or Radarr when the download is complete.
+
+## Step 4 — Import
+
+Sonarr or Radarr picks up the completed download and imports it into the media library.
+
+Files are moved (or hard-linked) from `/mnt/downloads` to `/mnt/media/tv` or `/mnt/media/movies`. The file is renamed according to your naming scheme, and the download folder is cleaned up.
+
+Hard links only work if both paths are on the same filesystem — which is why all paths come from the same ZFS pool.
+
+## Step 5 — Available in Plex
+
+Plex detects the new file via a library scan or a direct notification from Sonarr/Radarr. It fetches metadata automatically: cover art, episode info, ratings.
+
+The content is usually available to stream within a minute or two of the import finishing.
+
+---
+
+## Things to keep in mind
+
+**Path consistency** — Sonarr, Radarr, and SABnzbd must all see the same paths inside their containers. If the paths don't match, imports will fail silently. This is the most common source of problems after a fresh setup.
+
+**Permissions** — The user running Sonarr and Radarr needs write access to both `/mnt/downloads` and `/mnt/media`. This is handled by aligning UID/GID across all containers (`PUID=1000`, `PGID=1000`).
+
+**Quality profiles** — If nothing downloads, check your quality profile in Sonarr or Radarr. It may be too strict for what your indexers have available.

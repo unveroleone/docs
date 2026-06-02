@@ -1,0 +1,51 @@
+---
+title: "Configure Download Client (SABnzbd)"
+description: "Configure SABnzbd with your Usenet provider and download categories for Sonarr and Radarr."
+tags: ["sabnzbd", "usenet", "frugalusenet", "configuration"]
+---
+
+# Configure Download Client (SABnzbd)
+
+SABnzbd is already running. This step connects it to your Usenet provider and sets up the categories that Sonarr and Radarr use to identify their downloads.
+
+Open SABnzbd at `http://<docker-vm-ip>:8080`.
+
+## Add your Usenet provider
+
+Go to **Config → Servers → Add Server**:
+
+| Field | Value |
+|-------|-------|
+| Server | `news.frugalusenet.com` |
+| Port | `563` |
+| SSL | Yes |
+| Username | Your Frugal Usenet username |
+| Password | Your Frugal Usenet password |
+| Connections | Check your plan limit (10–20 is typical) |
+
+Click **Test Server**. A green result means SABnzbd can reach and authenticate with the server.
+
+## Set up categories
+
+Categories tell SABnzbd which subfolder to use for completed downloads, and let Sonarr and Radarr find their files.
+
+Go to **Config → Categories**:
+
+| Name | Folder |
+|------|--------|
+| `movies` | `movies` |
+| `tv` | `tv` |
+
+Leave the other fields at their defaults.
+
+The full download path will be `/downloads/movies` and `/downloads/tv` inside the container — which maps to `/mnt/media/downloads/movies` and `/mnt/media/downloads/tv` on the host.
+
+## Copy the API key
+
+Go to **Config → General** and copy the **SABnzbd API Key**. You will need it when adding SABnzbd as a download client in Sonarr and Radarr.
+
+## Result
+
+SABnzbd is connected to Frugal Usenet and ready to receive jobs. Categories are set up for movies and TV.
+
+Continue to [Configure Indexers (Prowlarr)](/docs/home-server/media-automation/installation/configure-prowlarr).

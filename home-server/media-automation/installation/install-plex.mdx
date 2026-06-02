@@ -1,0 +1,88 @@
+---
+title: "Install & Configure Plex"
+description: "Install Plex Media Server inside the Debian LXC and configure it with your media libraries."
+tags: ["plex", "lxc", "debian", "installation", "libraries"]
+---
+
+# Install & Configure Plex
+
+With the Plex LXC running and storage mounted, install Plex Media Server and connect it to your libraries.
+
+## Install Plex on Debian
+
+Open a shell inside the Plex LXC and run:
+
+```bash
+apt update && apt install -y curl apt-transport-https
+
+# Add the Plex repository key
+curl https://downloads.plex.tv/plex-keys/PlexSign.key | gpg --dearmor -o /usr/share/keyrings/plex-archive-keyring.gpg
+
+# Add the repository
+echo "deb [signed-by=/usr/share/keyrings/plex-archive-keyring.gpg] https://downloads.plex.tv/repo/deb public main" \
+  | tee /etc/apt/sources.list.d/plexmediaserver.list
+
+# Install
+apt update && apt install -y plexmediaserver
+
+# Enable and start
+systemctl enable plexmediaserver
+systemctl start plexmediaserver
+```
+
+Verify it is running:
+
+```bash
+systemctl status plexmediaserver
+```
+
+## Claim your server
+
+Go to `https://plex.tv/claim` and copy your claim token (it expires after 4 minutes).
+
+Set the token and restart:
+
+```bash
+PLEX_CLAIM="claim-xxxxxxxxxxxxxxxxxxxx" systemctl restart plexmediaserver
+```
+
+Plex will register the server to your account automatically.
+
+## Open the web UI
+
+From a browser on your LAN:
+
+```
+http://<plex-lxc-ip>:32400/web
+```
+
+The setup wizard will guide you through the initial configuration.
+
+## Add media libraries
+
+In the Plex web UI, go to **Settings → Libraries** and add:
+
+| Library type | Path |
+|-------------|------|
+| Movies | `/mnt/media/movies` |
+| TV Shows | `/mnt/media/tv` |
+
+These paths match what was mounted in the [Mount Storage](/docs/home-server/media-automation/installation/mount-storage) step.
+
+Plex will scan the directories on startup. They will be empty until Sonarr and Radarr download something.
+
+## Set up scan notifications
+
+To make Plex scan immediately when Sonarr or Radarr imports a file:
+
+1. In Plex, go to **Settings → General** and copy the X-Plex-Token from the URL
+2. In Sonarr, go to **Settings → Connect → Add → Plex Media Server** and enter the Plex LXC IP and token
+3. Do the same in Radarr
+
+This triggers an instant library update after each import instead of waiting for a scheduled scan.
+
+## Result
+
+Plex is installed and connected to your media libraries. No media is available yet — that comes after configuring the download services.
+
+Continue to [Configure Download Client (SABnzbd)](/docs/home-server/media-automation/installation/configure-sabnzbd).

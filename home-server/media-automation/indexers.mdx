@@ -1,0 +1,56 @@
+---
+title: "Indexers"
+description: "The four Usenet indexers I use in my setup: DrunkenSlug, NZBgeek, altHUB, and NzbPlanet — all managed through Prowlarr."
+tags: ["indexers", "usenet", "prowlarr", "drunkenslug", "nzbgeek", "althub", "nzbplanet"]
+---
+
+# Indexers
+
+Usenet indexers are search engines for Usenet content. They index binary posts across newsgroups and let you search by title. When Sonarr or Radarr looks for a release, it queries your indexers through Prowlarr.
+
+I currently run four indexers. All are paid services with API access.
+
+## DrunkenSlug
+
+- Site: `drunkenslug.com`
+- Type: paid, invite-only
+
+My highest-performing indexer. Despite having the slowest average response time (~500ms), it accounts for roughly 110 out of 189 total grabs — about 58% of everything downloaded. Registration is closed; invites occasionally appear on [r/usenetinvites](https://www.reddit.com/r/usenetinvites).
+
+## NZBgeek
+
+- Site: `nzbgeek.info`
+- Type: paid membership
+
+General-purpose indexer with solid coverage of movies and TV. Second in grab count (~55 grabs), with a response time around 320ms. A reliable fallback when DrunkenSlug doesn't have a release.
+
+## altHUB
+
+- Site: `althub.co.za`
+- Type: paid membership
+
+Faster than both DrunkenSlug and NZBgeek (~280ms), but contributes only ~12 grabs total. Coverage overlaps heavily with the top two.
+
+## NzbPlanet
+
+- Site: `nzbplanet.net`
+- Type: paid membership
+
+The fastest indexer in my setup (~220ms average response), but also the least useful — only ~6 successful grabs. Most of what it finds is already covered by DrunkenSlug or NZBgeek.
+
+## Which one actually matters
+
+DrunkenSlug and NZBgeek together account for ~88% of all grabs. altHUB and NzbPlanet fill in gaps that rarely come up in practice.
+
+Running all four isn't necessary. The two main indexers cover almost everything. I keep altHUB and NzbPlanet active for edge cases (obscure releases, regional content, or when a primary indexer is down), but trimming to just DrunkenSlug and NZBgeek would have minimal impact on day-to-day downloads.
+
+## Adding indexers in Prowlarr
+
+1. Open Prowlarr at `http://<docker-vm-ip>:9696`
+2. Go to **Indexers → Add Indexer**
+3. Search by name, select the indexer
+4. Enter your API key
+5. Click **Test** to verify the connection
+6. Click **Save**
+
+Prowlarr syncs the indexer to Sonarr and Radarr automatically — no manual steps needed there.

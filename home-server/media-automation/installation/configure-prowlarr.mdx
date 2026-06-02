@@ -1,0 +1,67 @@
+---
+title: "Configure Indexers (Prowlarr)"
+description: "Add NZBGeek and NinjaCentral to Prowlarr and sync them to Sonarr and Radarr."
+tags: ["prowlarr", "indexers", "nzbgeek", "ninjacentral", "configuration"]
+---
+
+# Configure Indexers (Prowlarr)
+
+Prowlarr manages all indexers in one place. Once configured here, they sync automatically to Sonarr and Radarr.
+
+Open Prowlarr at `http://<docker-vm-ip>:9696`.
+
+## Add NZBGeek
+
+Go to **Indexers → Add Indexer**, search for "NZBGeek", and select it.
+
+| Field | Value |
+|-------|-------|
+| API Key | From your NZBGeek account → Profile → API Key |
+
+Click **Test**, then **Save**.
+
+## Add NinjaCentral
+
+Go to **Indexers → Add Indexer**, search for "NinjaCentral", and select it.
+
+| Field | Value |
+|-------|-------|
+| API Key | From your NinjaCentral account → Profile → API Key |
+
+Click **Test**, then **Save**.
+
+## Connect Prowlarr to Sonarr
+
+Go to **Settings → Apps → Add Application → Sonarr**:
+
+| Field | Value |
+|-------|-------|
+| Prowlarr Server | `http://prowlarr:9696` |
+| Sonarr Server | `http://sonarr:8989` |
+| API Key | From Sonarr → Settings → General |
+| Sync Level | Full Sync |
+
+Click **Test** and **Save**.
+
+## Connect Prowlarr to Radarr
+
+Go to **Settings → Apps → Add Application → Radarr**:
+
+| Field | Value |
+|-------|-------|
+| Prowlarr Server | `http://prowlarr:9696` |
+| Radarr Server | `http://radarr:7878` |
+| API Key | From Radarr → Settings → General |
+| Sync Level | Full Sync |
+
+Click **Test** and **Save**.
+
+## Verify sync
+
+Open Sonarr or Radarr and go to **Settings → Indexers**. You should see NZBGeek and NinjaCentral listed there, synced automatically from Prowlarr.
+
+## Run a test search
+
+In Prowlarr, go to **Search** and run a manual search for a known title. Confirm both indexers return results.
+
+Continue to [Configure Sonarr & Radarr](/docs/home-server/media-automation/installation/configure-sonarr-radarr).

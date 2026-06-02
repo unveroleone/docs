@@ -1,0 +1,47 @@
+---
+title: "Providers"
+description: "The Usenet provider used in this setup: Frugal Usenet. Configured in SABnzbd as the download server."
+tags: ["providers", "usenet", "frugalusenet", "sabnzbd"]
+---
+
+# Providers
+
+A Usenet provider gives you access to newsgroup servers to download content. Without a provider, your indexers can find releases but SABnzbd has nowhere to download them from.
+
+This setup uses **Frugal Usenet** as the provider.
+
+## Frugal Usenet
+
+Frugal Usenet is a Swiss Usenet provider offering unlimited and block-based plans.
+
+- Site: `frugalusenet.com`
+- Server: `news.frugalusenet.com`
+- SSL port: `563`
+- Non-SSL port: `119` (not recommended)
+
+### Plans
+
+Frugal Usenet offers both monthly unlimited access and prepaid block accounts. Either works with this setup. Block accounts are a good option if your download volume is irregular.
+
+### Retention
+
+Frugal Usenet offers over 3,000 days of retention, which covers most content you will realistically want to download.
+
+## Configuring in SABnzbd
+
+Go to **Config → Servers → Add Server** and enter:
+
+| Field | Value |
+|-------|-------|
+| Server | `news.frugalusenet.com` |
+| Port | `563` |
+| SSL | Yes |
+| Username | Your Frugal Usenet username |
+| Password | Your Frugal Usenet password |
+| Connections | Set based on your plan (check your account) |
+
+After saving, use **Test Server** to verify the connection. A successful test confirms SABnzbd can reach the server and authenticate.
+
+## Using multiple providers
+
+You can add a backup provider in SABnzbd under the same **Servers** section. Mark it as a backup so it is only used if the primary fails or a file is not available on the primary server. This is optional for a home setup.

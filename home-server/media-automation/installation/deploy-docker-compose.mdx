@@ -1,0 +1,134 @@
+---
+title: "Deploy Docker Compose Stack"
+description: "The full docker-compose.yml for the media automation stack, and how to bring it up."
+tags: ["docker", "docker-compose", "sonarr", "radarr", "prowlarr", "sabnzbd", "seerr"]
+---
+
+# Deploy Docker Compose Stack
+
+This deploys all five automation services in a single command.
+
+## docker-compose.yml
+
+Create this file at `/srv/media-stack/docker-compose.yml`:
+
+```yaml
+networks:
+  media_net:
+    driver: bridge
+
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Zurich
+    volumes:
+      - /srv/media-stack/config/prowlarr:/config
+    ports:
+      - "9696:9696"
+    networks:
+      - media_net
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Zurich
+    volumes:
+      - /srv/media-stack/config/sonarr:/config
+      - /mnt/media/tv:/tv
+      - /mnt/media/downloads:/downloads
+    ports:
+      - "8989:8989"
+    networks:
+      - media_net
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Zurich
+    volumes:
+      - /srv/media-stack/config/radarr:/config
+      - /mnt/media/movies:/movies
+      - /mnt/media/downloads:/downloads
+    ports:
+      - "7878:7878"
+    networks:
+      - media_net
+    restart: unless-stopped
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Zurich
+    volumes:
+      - /srv/media-stack/config/sabnzbd:/config
+      - /mnt/media/downloads:/downloads
+    ports:
+      - "8080:8080"
+    networks:
+      - media_net
+    restart: unless-stopped
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
+    environment:
+      - TZ=Europe/Zurich
+    volumes:
+      - /srv/media-stack/config/seerr:/app/config
+    ports:
+      - "5055:5055"
+    networks:
+      - media_net
+    restart: unless-stopped
+```
+
+## Start the stack
+
+```bash
+cd /srv/media-stack
+docker compose up -d
+```
+
+## Verify all containers are running
+
+```bash
+docker compose ps
+```
+
+All five services should show `Up`. If any are in `Restarting` state, check the logs:
+
+```bash
+docker logs <container-name>
+```
+
+The most common cause of a restart loop at this stage is a config directory that does not exist or is not writable. Make sure `/srv/media-stack/config/` exists and is owned by `1000:1000`.
+
+## Service URLs
+
+| Service | URL |
+|---------|-----|
+| Prowlarr | `http://<docker-vm-ip>:9696` |
+| Sonarr | `http://<docker-vm-ip>:8989` |
+| Radarr | `http://<docker-vm-ip>:7878` |
+| SABnzbd | `http://<docker-vm-ip>:8080` |
+| Seerr | `http://<docker-vm-ip>:5055` |
+
+Open each URL to confirm the web UI loads. You do not need to configure anything yet.
+
+Continue to [Install & Configure Plex](/docs/home-server/media-automation/installation/install-plex).

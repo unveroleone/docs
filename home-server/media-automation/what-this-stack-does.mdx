@@ -1,0 +1,42 @@
+---
+title: "What this stack does"
+description: "A self-hosted media stack that handles requesting, downloading, organizing, and streaming media automatically — all running locally on Proxmox."
+tags: ["plex", "media", "automation", "usenet"]
+---
+
+# What this stack does
+
+This is a self-hosted media stack that handles everything from requesting a movie or show to downloading, organizing, and streaming it — without any manual steps in between.
+
+The full pipeline:
+
+**You request something → it gets downloaded → sorted into your library → available in Plex**
+
+## Services
+
+| Service | Role |
+|---------|------|
+| **Plex** | Streams media to any device |
+| **Seerr** | Web UI where you (or others) request movies and shows |
+| **Sonarr** | Manages TV shows: monitors, downloads, and organizes episodes |
+| **Radarr** | Same as Sonarr, but for movies |
+| **Prowlarr** | Manages Usenet indexers and syncs them to Sonarr and Radarr |
+| **SABnzbd** | The download client: receives NZBs, downloads from Usenet, and unpacks them |
+
+## How it's deployed
+
+**Plex** runs in a dedicated LXC container on Proxmox. This gives it direct access to storage and makes GPU passthrough straightforward.
+
+**Everything else** — Sonarr, Radarr, Prowlarr, SABnzbd, and Seerr — runs as Docker containers inside a VM on the same Proxmox host.
+
+**Media storage** is a ZFS pool (`tank`) mounted into both the Plex LXC and the Docker VM. The Plex LXC gets it via a bind mount. The Docker VM gets it via NFS.
+
+**Downloads** land on a separate path (`/mnt/downloads`), also mounted into the Docker VM. Sonarr and Radarr import files from there into the final media directories once a download completes.
+
+Keeping Plex in its own LXC and the automation stack in Docker means you can restart, update, or reconfigure the download services without touching Plex.
+
+## What this is not
+
+- Not a cloud setup. Everything runs locally on your Proxmox server.
+- Not BitTorrent. The stack is built around Usenet (NZB).
+- Not a Proxmox management guide. The host is assumed to be already running.

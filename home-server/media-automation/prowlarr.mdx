@@ -1,0 +1,70 @@
+---
+title: "Prowlarr"
+description: "Indexer manager that syncs your Usenet indexers to Sonarr and Radarr automatically."
+tags: ["prowlarr", "docker", "indexers", "usenet"]
+---
+
+# Prowlarr
+
+Prowlarr manages all your Usenet indexers in one place and syncs them to Sonarr and Radarr via their APIs. Instead of adding each indexer separately in Sonarr and Radarr, you add it once in Prowlarr and it propagates automatically.
+
+## Docker Compose
+
+```yaml
+prowlarr:
+  image: lscr.io/linuxserver/prowlarr:latest
+  container_name: prowlarr
+  environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=Europe/Zurich
+  volumes:
+    - /srv/media-stack/config/prowlarr:/config
+  ports:
+    - "9696:9696"
+  networks:
+    - media_net
+  restart: unless-stopped
+```
+
+## Initial Configuration
+
+Open `http://<docker-vm-ip>:9696`.
+
+### 1. Add indexers
+
+Go to **Indexers → Add Indexer** and search for your indexer by name. See the [Indexers](/docs/home-server/media-automation/indexers) page for the specific indexers used in this setup.
+
+For each indexer, you need the API key from your indexer account.
+
+### 2. Connect to Sonarr
+
+Go to **Settings → Apps → Add Application → Sonarr**:
+
+| Field | Value |
+|-------|-------|
+| Sonarr Server | `http://sonarr:8989` |
+| API Key | From Sonarr → Settings → General |
+| Sync Level | Full Sync |
+
+### 3. Connect to Radarr
+
+Go to **Settings → Apps → Add Application → Radarr**:
+
+| Field | Value |
+|-------|-------|
+| Radarr Server | `http://radarr:7878` |
+| API Key | From Radarr → Settings → General |
+| Sync Level | Full Sync |
+
+Once synced, your indexers appear automatically in both Sonarr and Radarr. Any indexer you add or remove in Prowlarr is reflected there without any manual steps.
+
+## Testing indexers
+
+After adding an indexer, use **Indexers → Test** to verify the connection and check that searches return results. A working indexer shows a green tick and response time.
+
+## Ports
+
+| Port | Purpose |
+|------|---------|
+| 9696 | Prowlarr web UI |

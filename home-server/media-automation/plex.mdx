@@ -1,0 +1,38 @@
+---
+title: "Plex"
+description: "What Plex is, why it's used in this stack, and how it compares to alternatives like Jellyfin and Emby."
+tags: ["plex", "media-server", "streaming"]
+---
+
+# Plex
+
+Plex is a media server that organizes your local media library and streams it to any device — phone, TV, browser, or dedicated app. You host it yourself; Plex provides the apps and the metadata (artwork, descriptions, ratings).
+
+In this stack, Plex runs in a dedicated LXC container on Proxmox and reads media from the ZFS pool that Sonarr and Radarr write to.
+
+## Why Plex
+
+Plex has the widest client support of any self-hosted media server. The apps are polished and available on every major platform. Remote access works out of the box through Plex's own relay, without needing to configure port forwarding or a reverse proxy.
+
+**Plex Pass** (paid subscription) adds hardware transcoding, offline sync, and multi-user home management. Hardware transcoding is the main reason to buy it — without it, the server has to software-transcode every stream that doesn't match the client's native format, which is CPU-intensive.
+
+## Alternatives
+
+**Jellyfin** is the most common alternative. It is fully open source and free, including hardware transcoding. The UI and apps are less refined than Plex, but the feature gap has narrowed significantly. If you want to avoid any paid subscription, Jellyfin is the practical choice.
+
+**Emby** sits between the two — open source base with a paid "Emby Premiere" tier for hardware transcoding and mobile sync. Less community momentum than Jellyfin.
+
+| | Plex | Jellyfin | Emby |
+|--|------|----------|------|
+| Cost | Free (HW transcoding needs Pass) | Free | Free (some features paid) |
+| Client apps | Excellent | Good | Good |
+| Hardware transcoding | Plex Pass required | Free | Emby Premiere required |
+| Remote access | Built-in relay | Manual setup | Manual setup |
+| Community | Large | Large | Smaller |
+
+## Where to go next
+
+Setup steps are in the Installation section:
+
+- [Create Plex LXC](/docs/home-server/media-automation/installation/create-plex-lxc) — creating the container in Proxmox
+- [Install & Configure Plex](/docs/home-server/media-automation/installation/install-plex) — installing the server and adding libraries

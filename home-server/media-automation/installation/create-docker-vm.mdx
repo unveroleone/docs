@@ -1,0 +1,89 @@
+---
+title: "Create Docker VM"
+description: "Create the VM that hosts the automation stack: Sonarr, Radarr, Prowlarr, SABnzbd, and Overseerr."
+tags: ["docker", "vm", "proxmox", "debian"]
+---
+
+# Create Docker VM
+
+The automation stack — Sonarr, Radarr, Prowlarr, SABnzbd, and Overseerr — runs as Docker containers inside a VM. Using a VM instead of an LXC gives better Docker compatibility and easier resource control.
+
+## Create the VM in Proxmox
+
+Click **Create VM** in the Proxmox UI. Recommended settings:
+
+**General**
+- Name: e.g. `docker-media`
+
+**OS**
+- ISO: Debian 12 (netinstall) — download from `debian.org` and upload to Proxmox local storage
+- Guest OS: Linux
+
+**System**
+- Leave defaults (SeaBIOS or OVMF both work)
+
+**Disk**
+- Size: **64 GB** (for the OS and Docker data; media is on separate ZFS storage)
+- Storage: local-lvm
+
+**CPU**
+- Cores: **4**
+
+**Memory**
+- RAM: **4096 MB** (4 GB)
+
+**Network**
+- Bridge: `vmbr0`
+
+## Install Debian
+
+Start the VM and follow the Debian installer. Use a minimal installation — no desktop environment needed. Set a hostname (e.g. `docker-media`), create a user, and finish the install.
+
+After first boot, update the system:
+
+```bash
+apt update && apt upgrade -y
+```
+
+## Install Docker
+
+```bash
+apt install -y ca-certificates curl gnupg
+
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
+
+Verify Docker is running:
+
+```bash
+docker run hello-world
+```
+
+## Create the config directory
+
+Create the directory that will hold all service configs:
+
+```bash
+mkdir -p /srv/media-stack/config/{sonarr,radarr,prowlarr,sabnzbd,overseerr}
+chown -R 1000:1000 /srv/media-stack/config/
+```
+
+## Result
+
+At this point:
+
+- Docker VM is running Debian
+- Docker and Docker Compose are installed
+- Config directory is created with correct ownership
+
+Continue to [Create ZFS Pool & Datasets](/docs/home-server/media-automation/installation/create-zfs-pool).
