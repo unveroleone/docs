@@ -10,19 +10,12 @@ Open items and planned improvements for this setup.
 
 ## Planned
 
-- [ ] Add a reverse proxy (Nginx Proxy Manager or Traefik) for HTTPS access to all web UIs
-- [ ] Set up Cloudflare Tunnel for secure remote access to Overseerr and Plex
-- [ ] Automate container updates with Watchtower and configure update notifications to Telegram
-- [ ] Document the full `docker-compose.yml` in one place as a copy-paste reference
-- [ ] Add ZFS snapshot schedule and document the snapshot retention policy
-- [ ] Set up Proxmox-level scheduled backups for the Docker VM and Plex LXC
-- [ ] Add a second Usenet provider as a backup server in SABnzbd
+- [ ] Books automation with Readarr
+- [ ] Music automation with Lidarr
 
 ## Under consideration
 
 - [ ] Jellyfin as an alternative to Plex (no Plex Pass requirement for hardware transcoding)
-- [ ] Bazarr for automatic subtitle downloads
-- [ ] Tautulli for Plex analytics and playback history
 
 ## Completed
 
@@ -31,3 +24,4 @@ Open items and planned improvements for this setup.
 - [x] ZFS pool with mirrored data disks
 - [x] Prometheus + Grafana monitoring with Telegram alerts
 - [x] UID/GID alignment across all containers
+- [x] Seerr with Cloudflare Tunnel and Telegram notifications

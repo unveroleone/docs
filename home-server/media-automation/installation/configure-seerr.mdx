@@ -53,6 +53,59 @@ Go to **Settings → General**:
 - **Auto-approve**: enable if you want requests to go straight to Sonarr/Radarr without manual review
 - **Request limit**: optionally set per-user limits to prevent excessive requests
 
+## Expose Seerr via Cloudflare Tunnel
+
+To access Seerr from outside your LAN, add a Cloudflare Tunnel entry that points to the Docker VM. If you already have a tunnel set up for the rest of the stack, add a new public hostname:
+
+| Field | Value |
+|-------|-------|
+| Subdomain | `seerr` (or whatever you prefer) |
+| Domain | Your domain |
+| Type | HTTP |
+| URL | `<docker-vm-ip>:5055` |
+
+Save the hostname. Seerr is now available at `https://seerr.yourdomain.com`. No port forwarding needed.
+
+Make sure Seerr is reachable inside the Docker VM first — open a browser to `http://<docker-vm-ip>:5055` from another machine on your LAN before setting up the tunnel.
+
+## Telegram notifications
+
+Seerr can send request updates to a Telegram bot. This is useful if you want to know when someone requests something without checking the web UI.
+
+### Create the bot
+
+1. Open Telegram and search for `@BotFather`
+2. Send `/newbot` and follow the prompts
+3. Copy the **Bot Authorization Token** — you need it for Seerr
+
+### Get your chat ID
+
+1. Start a chat with your new bot (search for its username in Telegram)
+2. Send any message to the bot (e.g., "Hello")
+3. Go to `https://api.telegram.org/bot<YourBotToken>/getUpdates` in your browser
+4. Look for the `"chat":{"id":...}` field in the JSON response and copy the number — this is your **Chat ID**
+
+### Configure in Seerr
+
+Go to **Settings → Notifications → Telegram**:
+
+1. Enable the agent
+2. Paste the **Bot Authorization Token**
+3. Paste the **Chat ID**
+4. Optionally set a **Bot Username** if you want users to DM the bot for their own notifications
+
+Select the notification types you want:
+
+- **Request Pending Approval** — when a request needs manual review
+- **Request Automatically Approved** — when auto-approve handles a request
+- **Request Approved** — when you manually approve a request
+- **Request Declined** — when a request is denied
+- **Request Available** — when media is downloaded and ready
+- **Request Processing Failed** — when Sonarr/Radarr rejects the request
+- **Issue Reported / Commented / Resolved / Reopened** — for user-reported issues
+
+Click **Test** to verify the bot sends a message. If it works, save the settings.
+
 ## Result
 
 Seerr is connected to Plex, Radarr, and Sonarr. Any Plex user with access can now go to Seerr, search for a title, and request it. The request flows automatically through the rest of the stack.
