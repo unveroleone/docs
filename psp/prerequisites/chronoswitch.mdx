@@ -1,0 +1,67 @@
+---
+title: "Chronoswitch"
+description: "Using Chronoswitch to downgrade or reinstall official PSP firmware."
+tags: ["psp", "chronoswitch", "firmware", "downgrade", "prerequisites"]
+---
+
+# Chronoswitch
+
+Chronoswitch is a tool that lets you install or reinstall official PSP firmware. It is useful in the following scenarios:
+
+- Reverting to an older firmware (e.g. 6.61 to 6.60)
+- Removing Infinity and/or custom firmware to revert to stock
+- Removing Infinity v1 to install Infinity v2
+- Removing custom firmware to install ARK-5
+
+## Before you start
+
+There are always risks when modifying firmware. Reduce them by:
+
+- Having at least **80% battery life**
+- Making sure your battery cannot fall out during the process
+- Keeping the charger plugged in
+
+## Downloads
+
+- [Chronoswitch](https://www.pspunk.com/psp-chronoswitch/)
+- Firmware files: [6.60 and 6.61](https://www.pspunk.com/psp-update/) or [other versions](https://darthsternie.net/psp-firmwares/)
+
+Do not downgrade to firmware below **6.20**. This guide has been tested with 6.60 and 6.61.
+
+## Steps
+
+**1. Download the correct firmware file**
+
+Download the firmware version you want to install. The **PSP Go** uses a different update file than all other PSP models. Make sure you get the right one for your model.
+
+If your file is not named `EBOOT.PBP`, rename it to `EBOOT.PBP`.
+
+**2. Transfer the firmware file**
+
+Transfer the firmware file to your memory stick at the following path:
+
+```
+PSP/GAME/UPDATE/EBOOT.PBP
+```
+
+PSP Go users can place the file on internal storage or the memory card.
+
+**3. Transfer Chronoswitch**
+
+Download `Chronoswitch.zip`, extract it, and copy its `EBOOT.PBP` to:
+
+```
+PSP/GAME/Chronoswitch/EBOOT.PBP
+```
+
+Create the `Chronoswitch` folder if it does not exist.
+
+**4. Run Chronoswitch**
+
+Disconnect from USB mode. In the **Game** tab on the XMB you will see both the Chronoswitch application and an entry for the firmware version you are installing. Open **Chronoswitch** and follow the on-screen instructions, pressing **X** to continue.
+
+The PSP will load the official firmware installer. Follow the steps on screen. Once complete, the PSP will restart on the firmware version you chose.
+
+## Credits
+
+DaveeFTW, Krazynez, TheZett, Darth Sternie, some1, bbtgp, coyotebean, kgsws, Silverspring, Bubbletune, qwikrazor87

@@ -1,0 +1,56 @@
+---
+title: "Update PSP to Firmware 6.61"
+description: "How to update your PSP to official firmware 6.60 or 6.61 before installing ARK-5."
+tags: ["psp", "firmware", "6.61", "6.60", "update", "prerequisites"]
+---
+
+# Update PSP to Firmware 6.61
+
+ARK-5 requires official firmware 6.61 (6.60 also works). If you are on a lower version, update before proceeding with the [ARK-5 install](/docs/psp/ark-5/install).
+
+Note that other guides may refer to PRO or LME/ME custom firmware. These are older and no longer maintained. Use ARK-5 instead.
+
+## Before you start
+
+There are always risks when modifying firmware. Reduce them by:
+
+- Having at least **80% battery life**
+- Making sure your battery cannot fall out during the process
+- Keeping the charger plugged in
+
+## Downloads
+
+Download the correct firmware file for your PSP model from [darthsternie.net/psp-firmwares](https://darthsternie.net/psp-firmwares/).
+
+| Model | 6.60 | 6.61 |
+|---|---|---|
+| PSP 1000, 2000, 3000, Street | Available | Available |
+| PSP Go | Available (different file) | Available (different file) |
+
+The PSP Go uses a different update file than all other models. Make sure you download the right one.
+
+## Steps
+
+**1. Rename the firmware file**
+
+If your downloaded file is not named `EBOOT.PBP`, rename it to `EBOOT.PBP`.
+
+**2. Transfer the firmware file**
+
+Connect your PSP via USB or remove the memory card. Copy the file to:
+
+```
+PSP/GAME/UPDATE/EBOOT.PBP
+```
+
+PSP Go users can place it on internal memory or the memory card.
+
+**3. Launch the update**
+
+Disconnect from USB mode. In the **Game** tab on the XMB, a new icon for the update will appear. Launch it and follow the on-screen instructions. The PSP will restart once the update is complete.
+
+Sony's original update instructions (via Web Archive) describe the same process and show the expected folder structure if you need a reference.
+
+## Next step
+
+Once you are on 6.61, you can proceed with the [ARK-5 install](/docs/psp/ark-5/install).
