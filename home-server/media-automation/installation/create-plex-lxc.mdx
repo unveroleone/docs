@@ -1,12 +1,14 @@
 ---
-title: "Create Plex LXC"
-description: "Create the Debian LXC container that will run Plex Media Server on Proxmox."
-tags: ["plex", "lxc", "proxmox", "debian"]
+title: "Create Media Server LXC (Plex or Jellyfin)"
+description: "Create the Debian LXC container that will run your media server — Plex or Jellyfin. The setup process is identical for both."
+tags: ["plex", "jellyfin", "lxc", "proxmox", "debian"]
 ---
 
-# Create Plex LXC
+# Create Media Server LXC
 
-Plex runs in a dedicated Debian LXC container. LXCs have lower overhead than full VMs, give Plex direct access to the ZFS storage via bind mounts, and make GPU passthrough easier to configure.
+Both Plex and Jellyfin run in a dedicated Debian LXC container — the creation process is identical for both. LXCs have lower overhead than full VMs, give the media server direct access to the ZFS storage via bind mounts, and make GPU passthrough easier to configure.
+
+Create one LXC and name it after whichever you are installing (`plex` or `jellyfin`).
 
 ## Download the Debian template
 
@@ -64,18 +66,20 @@ Review and click **Finish**.
 
 Select the new LXC in the Proxmox sidebar and click **Start**. Open the console to verify it boots correctly.
 
-## Why not Docker for Plex?
+## Why LXC instead of Docker?
 
-Plex in an LXC has a few advantages over running it in the Docker VM:
+Running your media server in an LXC (rather than as a Docker container inside the VM) has a few advantages:
 
 - Direct bind mount to ZFS storage without going through NFS
 - Simpler GPU/iGPU passthrough at the Proxmox level
 - Independent restart cycle from the automation stack
 
-The result is faster media access and simpler maintenance.
+This applies equally to Plex and Jellyfin — both benefit from the same setup.
 
 ## Next step
 
-The LXC is now running with Debian, but Plex is not installed yet. Storage is not mounted yet either. Continue to [Create Docker VM](/docs/home-server/media-automation/installation/create-docker-vm).
+The LXC is now running with Debian, but the media server is not installed yet. Storage is not mounted yet either. Continue to [Create Docker VM](/docs/home-server/media-automation/installation/create-docker-vm).
 
-Plex installation happens later in [Install & Configure Plex](/docs/home-server/media-automation/installation/install-plex), after storage is set up.
+Media server installation happens later, after storage is set up:
+- Plex: [Install & Configure Plex](/docs/home-server/media-automation/installation/install-plex)
+- Jellyfin: [Jellyfin](/docs/home-server/media-automation/user-facing-services/jellyfin)

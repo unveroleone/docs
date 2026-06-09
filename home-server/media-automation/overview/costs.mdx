@@ -1,0 +1,61 @@
+---
+title: "Cost Breakdown"
+description: "What this stack actually costs to run, depending on whether you choose Plex or Jellyfin as your media server."
+tags: ["plex", "jellyfin", "cost", "usenet", "newshosting"]
+---
+
+# Cost Breakdown
+
+The total cost of this stack depends mainly on one decision: **Plex or Jellyfin**.
+
+Everything else — Sonarr, Radarr, Prowlarr, SABnzbd, Seerr — is open source and free.
+
+## Plex vs Jellyfin: the cost difference
+
+Jellyfin is fully free. All features, including hardware transcoding and remote access, are included at no cost.
+
+Plex is free for basic local streaming, but the features you need for a proper multi-user setup — hardware transcoding and remote access outside your home — require **Plex Pass**.
+
+| | Plex | Jellyfin |
+|--|------|----------|
+| Media server software | Free (hardware transcoding locked) | Free (all features included) |
+| Hardware transcoding | Plex Pass required | Included |
+| Remote streaming | Plex Pass required | Included (needs reverse proxy) |
+| Plex Pass monthly | $6.99/month | — |
+| Plex Pass annual | $69.99/year | — |
+| Plex Pass lifetime | $249.99 (price increasing to $749.99) | — |
+
+The lifetime pass is the only option that makes Plex cost-competitive over time. If you are not ready to pay for it now, Jellyfin gives you the same capabilities for free.
+
+## Usenet provider
+
+Both Plex and Jellyfin setups use the same download stack. The only ongoing cost for either option is the Usenet provider.
+
+This documentation uses [Newshosting](/docs/home-server/media-automation/automation-download/providers) as the primary provider.
+
+| Plan | Cost | Notes |
+|------|------|-------|
+| Newshosting starter deal | $23/year (~$1.92/month) | Includes EasyNews free for one year |
+| Newshosting standard | ~$10–15/month | Full unlimited plan |
+
+The starter deal covers a home setup easily. Check the [Providers page](/docs/home-server/media-automation/automation-download/providers) for the current promo link.
+
+## First-year totals
+
+| Setup | Year 1 | Ongoing (annual) |
+|-------|--------|-----------------|
+| Jellyfin + Newshosting starter | ~$23 | ~$23/year |
+| Plex (annual Pass) + Newshosting starter | ~$93 | ~$93/year |
+| Plex (lifetime Pass, current price) + Newshosting starter | ~$273 one-time, then ~$23/year | ~$23/year after |
+| Plex (lifetime Pass, future price) + Newshosting starter | ~$773 one-time, then ~$23/year | ~$23/year after |
+
+If long-term cost is the deciding factor, Jellyfin has no ongoing software cost. Plex lifetime at the current price ($249.99) breaks even with the annual plan in about 3.5 years — at $749.99, that calculation shifts significantly.
+
+## What you do not pay for
+
+- Sonarr, Radarr, Prowlarr, SABnzbd, Seerr: all free and open source
+- Cloudflare Tunnels for remote access: free tier is sufficient for this use case
+- Proxmox VE: free to use (subscription is optional, only required for enterprise support)
+- Docker: free
+
+The hardware (server, disks, GPU) is a one-time cost covered in the [Prerequisites](/docs/home-server/media-automation/installation/prerequisites) page.

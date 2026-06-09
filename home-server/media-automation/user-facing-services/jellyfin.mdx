@@ -1,0 +1,119 @@
+---
+title: "Jellyfin"
+description: "Jellyfin as a fully free alternative to Plex — what it offers, how it fits into this stack, and how to set it up in a dedicated LXC on Proxmox."
+tags: ["jellyfin", "media-server", "streaming", "lxc", "proxmox", "free"]
+---
+
+# Jellyfin
+
+Jellyfin is a fully open-source media server. It organizes your library and streams it to your devices — same role as Plex, but with no paid tier, no cloud authentication, and no account required. Every feature, including hardware transcoding and remote access, is free.
+
+In this stack, Jellyfin runs in a **dedicated LXC container on Proxmox**, exactly like Plex. This gives it direct access to the ZFS storage via bind mount and makes GPU passthrough straightforward — the same reasoning that applies to Plex applies here.
+
+## Why Jellyfin
+
+The main reason to choose Jellyfin over Plex is cost. Hardware transcoding, offline sync, HDR tone mapping — everything that Plex gates behind a $249.99 lifetime pass (price expected to rise to $749.99) — is free in Jellyfin.
+
+The other reason is independence. Jellyfin has no external dependencies. There is no jellyfin.org account, no cloud authentication, no telemetry. The server works fully offline and is not affected by any changes to a third-party service.
+
+Where Plex still has an edge: client app quality on smart TVs and consoles. Plex has native apps on PlayStation and Xbox. Jellyfin's apps on some TV platforms are less refined, though the gap has narrowed. The web interface, Android, and iOS apps are solid.
+
+See the full comparison on the [Plex](/docs/home-server/media-automation/user-facing-services/plex) page or the [Cost Breakdown](/docs/home-server/media-automation/overview/costs).
+
+## Create the LXC
+
+Follow the same process as the [Create Plex LXC](/docs/home-server/media-automation/installation/create-plex-lxc) guide — the container settings are identical:
+
+| Setting | Value |
+|---------|-------|
+| Template | Debian (latest) |
+| Hostname | `jellyfin` |
+| Unprivileged container | Yes |
+| Nesting | Yes |
+| Disk | 32 GB |
+| CPU | 2–4 cores |
+| RAM | 2048 MB |
+
+Start the container and open a console before continuing.
+
+## Install Jellyfin
+
+Open a shell inside the Jellyfin LXC and run:
+
+```bash
+apt update && apt upgrade -y
+apt install -y curl
+
+# Official Jellyfin install script — adds the repository and installs the package
+curl https://repo.jellyfin.org/install-debuntu.sh | bash
+```
+
+The script detects your Debian version, adds the Jellyfin apt repository, and installs the package. Jellyfin starts automatically after installation.
+
+Verify it is running:
+
+```bash
+systemctl status jellyfin
+```
+
+## Mount storage
+
+Mount the ZFS datasets into the LXC as bind mounts, the same way Plex is configured. Follow the [Mount Storage](/docs/home-server/media-automation/installation/mount-storage) guide — the paths are the same:
+
+| Mount point | Purpose |
+|-------------|---------|
+| `/mnt/media` | Media library (movies, TV) |
+
+## Open the web UI
+
+From a browser on your LAN:
+
+```
+http://<jellyfin-lxc-ip>:8096
+```
+
+The setup wizard will guide you through initial configuration. Create an admin account — no external account is needed.
+
+## Add media libraries
+
+In the Jellyfin web UI, follow the wizard to add libraries:
+
+| Library type | Path |
+|-------------|------|
+| Movies | `/mnt/media/movies` |
+| TV Shows | `/mnt/media/tv` |
+
+Jellyfin will scan on startup and add files automatically when new content arrives.
+
+## GPU passthrough (hardware transcoding)
+
+Hardware transcoding in Jellyfin is free and available without any paid tier. To enable it, pass through the GPU from the Proxmox host to the Jellyfin LXC — the process is the same as for the Plex LXC.
+
+After passthrough is configured, go to **Administration → Dashboard → Playback** in the Jellyfin UI, enable hardware acceleration, and select your GPU (NVIDIA NVENC, Intel QSV, or VA-API depending on your hardware).
+
+## Connecting Seerr to Jellyfin
+
+Seerr supports Jellyfin natively. During the Seerr setup wizard, choose Jellyfin instead of Plex:
+
+1. In Jellyfin, go to **Administration → Dashboard → API Keys** and create a new key for Seerr
+2. In the Seerr setup wizard, select **Jellyfin** as your media server
+3. Enter the server URL (`http://<jellyfin-lxc-ip>:8096`) and the API key
+4. Click **Sync Library** to confirm the connection
+
+Users authenticate with Jellyfin accounts you create under **Administration → Users** — no plex.tv account needed.
+
+## Scan notifications from Sonarr and Radarr
+
+To trigger an immediate library update when Sonarr or Radarr imports a file:
+
+1. In Jellyfin, copy your API key from **Administration → Dashboard → API Keys**
+2. In Sonarr, go to **Settings → Connect → Add → Emby/Jellyfin**, enter the LXC IP and API key
+3. Repeat in Radarr
+
+## Remote access
+
+Jellyfin does not include a built-in relay. Remote access requires a reverse proxy. If you are already using Cloudflare Tunnels, add a tunnel pointing to `http://<jellyfin-lxc-ip>:8096` — the setup is the same as for any other service in the stack.
+
+## Result
+
+Jellyfin is installed in its own LXC, connected to your media libraries, and integrated with Seerr, Sonarr, and Radarr. The pipeline is identical to the Plex setup: a request in Seerr flows through Radarr or Sonarr, gets downloaded by SABnzbd, and appears in Jellyfin automatically.

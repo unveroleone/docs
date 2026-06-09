@@ -14,20 +14,26 @@ In this stack, Plex runs in a dedicated LXC container on Proxmox and reads media
 
 Plex has the widest client support of any self-hosted media server. The apps are polished and available on every major platform. Remote access works out of the box through Plex's own relay, without needing to configure port forwarding or a reverse proxy.
 
-**Plex Pass** (paid subscription) adds hardware transcoding, offline sync, and multi-user home management. Hardware transcoding is the main reason to buy it — without it, the server has to software-transcode every stream that doesn't match the client's native format, which is CPU-intensive.
+**Plex Pass** (paid subscription) adds hardware transcoding, remote streaming outside your home network, offline sync, and multi-user home management. Hardware transcoding is the main reason to buy it — without it, the server has to software-transcode every stream that doesn't match the client's native format, which is CPU-intensive.
+
+Plex Pass pricing: $6.99/month, $69.99/year, or $249.99 lifetime. The lifetime price is expected to increase to $749.99 — buy before that if you plan to use Plex long-term.
+
+If you are not ready to commit to Plex Pass, consider [Jellyfin](/docs/home-server/media-automation/user-facing-services/jellyfin) instead — it includes hardware transcoding and remote access for free.
 
 ## Alternatives
 
-**Jellyfin** is the most common alternative. It is fully open source and free, including hardware transcoding. The UI and apps are less refined than Plex, but the feature gap has narrowed significantly. If you want to avoid any paid subscription, Jellyfin is the practical choice.
+**Jellyfin** is the fully free alternative. It is open source, includes hardware transcoding at no cost, and has no cloud dependency or account requirement. The client apps are slightly less refined than Plex on some TV platforms, but cover all major devices. If you want to avoid any paid subscription, Jellyfin is the practical choice. See the [Jellyfin page](/docs/home-server/media-automation/user-facing-services/jellyfin) for setup instructions.
 
 **Emby** sits between the two — open source base with a paid "Emby Premiere" tier for hardware transcoding and mobile sync. Less community momentum than Jellyfin.
 
 | | Plex | Jellyfin | Emby |
 |--|------|----------|------|
-| Cost | Free (HW transcoding needs Pass) | Free | Free (some features paid) |
-| Client apps | Excellent | Good | Good |
+| Cost | Free (HW transcoding and remote need Pass) | Free — all features included | Free (some features paid) |
+| Plex Pass / equivalent | $249.99 lifetime (rising to $749.99) | Not needed | Emby Premiere required |
+| Client apps | Excellent, incl. PlayStation and Xbox | Good, all major platforms | Good |
 | Hardware transcoding | Plex Pass required | Free | Emby Premiere required |
-| Remote access | Built-in relay | Manual setup | Manual setup |
+| Remote access | Plex Pass required (built-in relay) | Free (manual reverse proxy) | Manual setup |
+| Account required | Yes | No | No |
 | Community | Large | Large | Smaller |
 
 ## Where to go next
