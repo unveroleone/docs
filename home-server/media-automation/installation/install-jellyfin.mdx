@@ -18,7 +18,7 @@ Open a shell inside the Jellyfin LXC and run:
 apt update && apt upgrade -y
 apt install -y curl
 
-# Official Jellyfin install script — adds the repository and installs the package
+# Official Jellyfin install script: adds the repository and installs the package
 curl https://repo.jellyfin.org/install-debuntu.sh | bash
 ```
 
@@ -38,7 +38,7 @@ From a browser on your LAN:
 http://<jellyfin-lxc-ip>:8096
 ```
 
-The setup wizard will guide you through initial configuration. Create an admin account — no external account is required.
+The setup wizard will guide you through initial configuration. Create an admin account; no external account is required.
 
 ## Add media libraries
 
@@ -72,11 +72,11 @@ Seerr supports Jellyfin natively. If you are setting up Seerr for the first time
 3. Enter the server URL (`http://<jellyfin-lxc-ip>:8096`) and the API key
 4. Click **Sync Library** to confirm the connection
 
-Users authenticate with Jellyfin accounts you create under **Administration → Users** — no plex.tv account needed.
+Users authenticate with Jellyfin accounts you create under **Administration → Users**. No plex.tv account is needed.
 
 ## GPU passthrough (hardware transcoding)
 
-Hardware transcoding is free in Jellyfin — no paid tier required. To enable it, pass through the GPU from the Proxmox host to the Jellyfin LXC.
+Hardware transcoding is free in Jellyfin; no paid tier is required. To enable it, pass through the GPU from the Proxmox host to the Jellyfin LXC.
 
 **For Intel iGPU (QSV):**
 
@@ -108,10 +108,10 @@ After passthrough is configured, enable hardware acceleration in Jellyfin under 
 
 ## Remote access
 
-Jellyfin does not include a built-in relay. Remote access requires a reverse proxy. If you are already using Cloudflare Tunnels, add a tunnel pointing to `http://<jellyfin-lxc-ip>:8096` — the setup is the same as for any other service in the stack.
+Jellyfin does not include a built-in relay. Remote access requires a reverse proxy. If you are already using Cloudflare Tunnels, add a tunnel pointing to `http://<jellyfin-lxc-ip>:8096`, the setup is the same as for any other service in the stack.
 
 ## Result
 
-Jellyfin is installed and connected to your media libraries. No media is available yet — that comes after configuring the download services.
+Jellyfin is installed and connected to your media libraries. No media is available yet; that comes after configuring the download services.
 
 Continue to [Configure Download Client (SABnzbd)](/docs/home-server/media-automation/installation/configure-sabnzbd).

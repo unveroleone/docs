@@ -6,13 +6,13 @@ tags: ["jellyfin", "media-server", "streaming", "free", "open-source"]
 
 # Jellyfin
 
-Jellyfin is a fully open-source media server. It organizes your local media library and streams it to your devices — same role as Plex, but with no paid tier, no cloud authentication, and no account required. Every feature, including hardware transcoding and remote access, is free.
+Jellyfin is a fully open-source media server. It organizes your local media library and streams it to your devices: same role as Plex, but with no paid tier, no cloud authentication, and no account required. Every feature, including hardware transcoding and remote access, is free.
 
 In this stack, Jellyfin runs in a dedicated LXC container on Proxmox, exactly like Plex. This gives it direct access to the ZFS storage via bind mount and makes GPU passthrough straightforward.
 
 ## Why Jellyfin
 
-The main reason to choose Jellyfin over Plex is cost. Hardware transcoding, HDR tone mapping, remote streaming — everything Plex gates behind a $249.99 lifetime pass (expected to rise to $749.99) — is free in Jellyfin.
+The main reason to choose Jellyfin over Plex is cost. Hardware transcoding, HDR tone mapping, and remote streaming are all free. Plex gates these features behind a $249.99 lifetime pass (expected to rise to $749.99).
 
 The other reason is independence. Jellyfin has no external dependencies. No account, no cloud authentication, no telemetry. The server works fully offline and is not tied to any third-party service.
 
@@ -36,5 +36,5 @@ See the [Cost Breakdown](/docs/home-server/media-automation/overview/costs) for 
 
 Setup steps are in the Installation section:
 
-- [Create Media Server LXC](/docs/home-server/media-automation/installation/create-plex-lxc) — creating the container in Proxmox (same process as Plex)
-- [Install & Configure Jellyfin](/docs/home-server/media-automation/installation/install-jellyfin) — installing Jellyfin and connecting it to your libraries
+- [Create Media Server LXC](/docs/home-server/media-automation/installation/create-plex-lxc): creating the container in Proxmox (same process as Plex)
+- [Install & Configure Jellyfin](/docs/home-server/media-automation/installation/install-jellyfin): installing Jellyfin and connecting it to your libraries
