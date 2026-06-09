@@ -62,7 +62,17 @@ Jellyfin applies automatic scanning settings to **each individual library**, not
 3. Locate the library you want to update (e.g., *Movies* or *TV Shows*), click the **three dots (...)** on its card, and select **Manage Library**
 4. Scroll down near the bottom of the settings popup and check **Enable real-time monitoring**, then click **Save**
 
-Repeat for both your Movies and TV Shows libraries. Jellyfin will now pick up new files the moment they appear on disk — no scheduled scan delay.
+Repeat for both your Movies and TV Shows libraries. Jellyfin will now pick up new files the moment they appear on disk, with no scheduled scan delay.
+
+**Note: real-time monitoring relies on inotify and does not work over NFS.** If your arr stack and Jellyfin run on separate machines connected by NFS, the filesystem event never reaches Jellyfin and real-time monitoring will not fire.
+
+In that case, use the Sonarr/Radarr built-in Jellyfin connection instead:
+
+1. In Sonarr or Radarr, go to **Settings → Connect** and add a **Jellyfin** connection
+2. Enter the Jellyfin server URL and API key
+3. Enable **On Import** and **On Upgrade**
+
+Sonarr/Radarr will notify Jellyfin via API after each import, which works regardless of how Jellyfin accesses the files.
 
 ## Connect Seerr to Jellyfin
 

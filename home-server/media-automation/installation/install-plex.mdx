@@ -77,9 +77,18 @@ Plex will scan the directories on startup. They will be empty until Sonarr and R
 
 To make Plex scan immediately when Sonarr or Radarr imports a file:
 
-1. In Plex, go to **Settings → Library and enable "Scan my library automatically"
+1. In Plex, go to **Settings → Library** and enable **"Scan my library automatically"**
 
 This triggers an instant library update after each import instead of waiting for a scheduled scan.
+
+**Note: this only works if Plex accesses the media files via a local bind mount.** Automatic scanning relies on inotify, and inotify does not propagate over NFS. If your arr stack and Plex run on separate machines connected by NFS (for example, arr inside a TrueNAS VM and Plex in a separate LXC), the filesystem event never reaches Plex and automatic scanning will not fire.
+
+In that case, use the Sonarr/Radarr built-in Plex connection instead:
+
+1. In Sonarr or Radarr, go to **Settings → Connect** and add a **Plex Media Server** connection
+2. Enable **On Import** and **On Upgrade**
+
+Sonarr/Radarr will call the Plex API directly after each import, which works regardless of how Plex accesses the files and is generally faster than filesystem monitoring.
 
 ## Result
 
