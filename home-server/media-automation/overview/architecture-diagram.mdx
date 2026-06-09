@@ -34,7 +34,7 @@ User
 | `/mnt/media/tv` | Sonarr, Plex | Final TV show library |
 | `/mnt/downloads` | SABnzbd, Sonarr, Radarr | Download staging area |
 
-All three paths come from the same ZFS pool. Sonarr and Radarr see both `/mnt/downloads` and `/mnt/media` — this is what allows them to use hard links during import instead of copying files.
+All three paths come from the same ZFS pool. Sonarr and Radarr see both `/mnt/downloads` and `/mnt/media` — this allows them to move files (instant rename) during import instead of copying across filesystems.
 
 ## VM and LXC IDs
 

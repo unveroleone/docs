@@ -30,9 +30,13 @@ Files land in `/mnt/downloads`. SABnzbd notifies Sonarr or Radarr when the downl
 
 Sonarr or Radarr picks up the completed download and imports it into the media library.
 
-Files are moved (or hard-linked) from `/mnt/downloads` to `/mnt/media/tv` or `/mnt/media/movies`. The file is renamed according to your naming scheme, and the download folder is cleaned up.
+For Usenet downloads, the arr apps use a **move** operation — they rename the file from `/mnt/downloads` into `/mnt/media/movies` or `/mnt/media/tv`. This is instant when both paths are on the same filesystem (the inode stays the same, just the path changes). The file is also renamed according to your naming scheme.
 
-Hard links only work if both paths are on the same filesystem — which is why all paths come from the same ZFS pool.
+Hard links are **not** used for Usenet imports. The *Use Hardlinks instead of Copy* setting in Sonarr and Radarr exists solely for torrents, where the original file must stay in place so seeding can continue. For Usenet, there is no seeding to preserve, so a move is the intended behavior.
+
+If `/mnt/downloads` and `/mnt/media` are on different filesystems, even a move falls back to copy+delete — the file is copied across and the original is deleted. This is slower and temporarily uses double the disk space.
+
+**What about ZFS reflinks?** Sonarr and Radarr both support ZFS block cloning (reflinks) as of early 2025 (Sonarr PR #7566, Radarr PR #10845). This requires OpenZFS 2.2+ with block cloning explicitly enabled on the pool: `zfs set bclone=enabled tank`. Reflinks work within the same ZFS pool and avoid the extra disk I/O of a copy — but for a Usenet-only setup without torrent seeding, they offer no advantage over a simple move.
 
 ## Step 5 — Available in Plex
 

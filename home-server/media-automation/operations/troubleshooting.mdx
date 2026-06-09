@@ -84,15 +84,16 @@ Most startup failures are caused by a config volume that is owned by root instea
 
 ---
 
-## Hard links are not working
+## Imports are slow (copying instead of moving)
 
-Hard links only work when source and destination are on the same filesystem. If `/downloads` and `/mnt/media` are on different disks or different ZFS datasets that are not on the same pool, Sonarr and Radarr will copy files instead of linking them.
+For Usenet downloads, Sonarr and Radarr use a **move** (rename) during import — not hard links. Hard links are a torrent-only feature, used to keep the original file in place for seeding.
 
-To verify: after a successful import, check if the file in `/mnt/media` and the original in `/downloads` share the same inode:
+If `/downloads` and `/mnt/media` are on different filesystems, even a move falls back to copy+delete. This doubles disk I/O during import and is noticeably slower. The fix is to keep both paths on the same filesystem.
+
+To verify how files are being handled: after a successful import, check the inode of the file in `/mnt/media`:
 
 ```bash
 stat /mnt/media/movies/SomeMovie/SomeMovie.mkv
-stat /mnt/media/downloads/SomeMovie.mkv
 ```
 
-If the inode numbers match, hard links are working.
+If the file was moved (same filesystem), the inode matches the original. If it was copied (cross-filesystem), it has a new inode.

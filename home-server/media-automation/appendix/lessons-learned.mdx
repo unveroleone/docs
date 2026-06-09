@@ -25,11 +25,11 @@ mkdir -p /srv/media-stack/config/{sonarr,radarr,prowlarr,sabnzbd,seerr}
 chown -R 1000:1000 /srv/media-stack/config/
 ```
 
-## Hard links require a single filesystem
+## Keep downloads and media on the same filesystem
 
-Setting up downloads and media on separate disks (or separate ZFS pools) breaks hard links. Sonarr and Radarr fall back to copying files, which doubles disk usage during import and is much slower.
+Putting downloads and media on separate disks (or separate filesystems, e.g. ext4 for downloads and ZFS for media) means Sonarr and Radarr fall back to copy+delete during import — doubling disk I/O and taking much longer.
 
-The solution is to keep all paths — downloads and final media — on the same ZFS pool, even if they are different datasets.
+For Usenet, the arr apps use a move (rename), not hard links. Hard links are torrent-only. But even a move becomes a copy+delete when crossing filesystem boundaries. Keeping everything on the same filesystem keeps imports fast.
 
 ## Plex LXC vs Docker
 

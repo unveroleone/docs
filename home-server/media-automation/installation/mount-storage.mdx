@@ -95,6 +95,6 @@ Both the Plex LXC and the Docker VM now see the same paths:
 - `/mnt/media/tv`
 - `/mnt/media/downloads`
 
-This shared path structure is what allows Sonarr and Radarr to hard-link files from downloads into the final library without copying.
+This shared path structure is what allows Sonarr and Radarr to move files from downloads into the final library with a fast rename, instead of copying across filesystems.
 
 Continue to [Permissions (UID / GID)](/docs/home-server/media-automation/installation/permissions).

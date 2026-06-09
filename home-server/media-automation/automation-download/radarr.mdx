@@ -29,7 +29,7 @@ radarr:
   restart: unless-stopped
 ```
 
-Both `/movies` and `/downloads` must be visible inside the container — same reason as Sonarr: hard links during import only work when both paths are on the same filesystem.
+Both `/movies` and `/downloads` must be visible inside the container — same reason as Sonarr: having both paths on the same filesystem allows a fast move (rename) during import instead of a copy across filesystems.
 
 ## Initial Configuration
 

@@ -36,7 +36,11 @@ A way to expose a directory from the Proxmox host (or a ZFS dataset) inside an L
 
 ## Hard link
 
-A filesystem feature where two filenames point to the same data on disk. When Sonarr or Radarr imports a download, it can hard-link the file from `/downloads` to `/mnt/media` instead of copying it. No extra disk space is used. Hard links only work within the same filesystem.
+A filesystem feature where two filenames point to the same data on disk. With torrents, Sonarr and Radarr can hard-link the file from `/downloads` to `/mnt/media` so seeding continues without using extra disk space. For Usenet downloads, hard links are not used — the arr apps move (rename) the file instead, since there is no seeding to preserve. Hard links and moves only work within the same filesystem; across filesystems, the operation falls back to copy+delete.
+
+## Reflink (block cloning)
+
+A copy-on-write reference that achieves the same space-saving effect as a hard link — without the constraint that both files must be on the same filesystem. btrfs supports reflinks natively. Sonarr and Radarr have supported ZFS block cloning (reflinks) since early 2025, requiring OpenZFS 2.2+ with `bclone=enabled` set on the pool. For Usenet-only setups, reflinks offer no practical advantage over a simple move (rename), since there is no torrent to keep seeding.
 
 ## Quality profile
 

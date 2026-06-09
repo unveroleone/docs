@@ -29,7 +29,7 @@ sonarr:
   restart: unless-stopped
 ```
 
-Both `/tv` and `/downloads` must be visible inside the container. This is what allows Sonarr to hard-link files during import instead of copying them.
+Both `/tv` and `/downloads` must be visible inside the container. This allows Sonarr to move files (instant rename) during import instead of copying across filesystems.
 
 ## Initial Configuration
 
