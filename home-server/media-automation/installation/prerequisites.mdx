@@ -38,7 +38,7 @@ This setup assumes a simple flat LAN:
 - Static IPs or DHCP reservations for the Proxmox host, Plex LXC, and Docker VM
 - No VLANs required
 
-Remote access to Plex is handled by Plex's own relay. All other services (Sonarr, Radarr, Overseerr, etc.) are LAN-only by default.
+Remote access to Plex is handled by Plex's own relay. All other services (Sonarr, Radarr, Seerr, etc.) are LAN-only by default.
 
 ## Disk layout
 
@@ -61,8 +61,7 @@ Create these before starting:
 | Account | Where | Notes |
 |---------|-------|-------|
 | Plex account | `plex.tv` | Free account is enough; Plex Pass needed for hardware transcoding |
-| Usenet provider | `frugalusenet.com` | Keep credentials ready for SABnzbd |
+| Usenet provider | `newshosting.com` | Keep credentials ready for SABnzbd |
 | Indexer — NZBGeek | `nzbgeek.info` | API key needed for Prowlarr |
-| Indexer — NinjaCentral | `ninjacentral.co.za` | API key needed for Prowlarr |
 
 Store credentials securely before you start. You will need them at multiple points during setup.

@@ -6,7 +6,7 @@ tags: ["permissions", "uid", "gid", "docker", "lxc"]
 
 # Permissions (UID / GID)
 
-This is the step most people skip, and it causes the most problems. All services — Plex, Sonarr, Radarr, SABnzbd, and Overseerr — need to read and write to the same storage paths. For this to work without permission errors, they all need to run as the same UID and GID.
+This is the step most people skip, and it causes the most problems. All services — Plex, Sonarr, Radarr, SABnzbd, and Seerr — need to read and write to the same storage paths. For this to work without permission errors, they all need to run as the same UID and GID.
 
 This setup uses `UID=1000` and `GID=1000` everywhere.
 

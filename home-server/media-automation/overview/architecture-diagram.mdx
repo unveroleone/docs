@@ -16,7 +16,7 @@ tags: ["architecture", "plex", "proxmox", "zfs", "docker"]
 │  │   Plex LXC       │     │       Docker VM          │  │
 │  │  (lxc/103)       │     │      (qemu/102)          │  │
 │  │                  │     │                          │  │
-│  │  Plex Media      │     │  Overseerr               │  │
+│  │  Plex Media      │     │  Seerr               │  │
 │  │  Server          │     │  Sonarr   Radarr         │  │
 │  │                  │     │  Prowlarr SABnzbd        │  │
 │  └────────┬─────────┘     └───────────┬──────────────┘  │
@@ -37,7 +37,7 @@ tags: ["architecture", "plex", "proxmox", "zfs", "docker"]
 
 ```
 User
-└─► Overseerr (request)
+└─► Seerr (request)
     └─► Sonarr / Radarr (pick release, apply quality profile)
         └─► Prowlarr (search indexers)
             └─► SABnzbd (download + unpack to /mnt/downloads)
@@ -61,7 +61,7 @@ All three paths come from the same ZFS pool. Sonarr and Radarr see both `/mnt/do
 |----|------|---------|
 | `lxc/103` | LXC | Plex Media Server |
 | `lxc/104` | LXC | n8n |
-| `qemu/102` | VM | Docker host — Sonarr, Radarr, SABnzbd, Overseerr |
+| `qemu/102` | VM | Docker host — Sonarr, Radarr, SABnzbd, Seerr |
 | `node/proxmox` | Host | Proxmox VE node |
 
 ## Network
@@ -71,7 +71,7 @@ All Docker containers run on a shared internal network (`media_net`). They commu
 | Service | LAN Port |
 |---------|----------|
 | Plex | 32400 |
-| Overseerr | 5055 |
+| Seerr | 5055 |
 | Sonarr | 8989 |
 | Radarr | 7878 |
 | Prowlarr | 9696 |

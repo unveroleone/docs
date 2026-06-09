@@ -1,12 +1,12 @@
 ---
 title: "Create Docker VM"
-description: "Create the VM that hosts the automation stack: Sonarr, Radarr, Prowlarr, SABnzbd, and Overseerr."
+description: "Create the VM that hosts the automation stack: Sonarr, Radarr, Prowlarr, SABnzbd, and Seerr."
 tags: ["docker", "vm", "proxmox", "debian"]
 ---
 
 # Create Docker VM
 
-The automation stack — Sonarr, Radarr, Prowlarr, SABnzbd, and Overseerr — runs as Docker containers inside a VM. Using a VM instead of an LXC gives better Docker compatibility and easier resource control.
+The automation stack — Sonarr, Radarr, Prowlarr, SABnzbd, and Seerr — runs as Docker containers inside a VM. Using a VM instead of an LXC gives better Docker compatibility and easier resource control.
 
 ## Create the VM in Proxmox
 
@@ -74,7 +74,7 @@ docker run hello-world
 Create the directory that will hold all service configs:
 
 ```bash
-mkdir -p /srv/media-stack/config/{sonarr,radarr,prowlarr,sabnzbd,overseerr}
+mkdir -p /srv/media-stack/config/{sonarr,radarr,prowlarr,sabnzbd,seerr}
 chown -R 1000:1000 /srv/media-stack/config/
 ```
 
