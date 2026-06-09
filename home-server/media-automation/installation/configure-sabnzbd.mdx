@@ -1,7 +1,7 @@
 ---
 title: "Configure Download Client (SABnzbd)"
 description: "Configure SABnzbd with your Usenet provider and download categories for Sonarr and Radarr."
-tags: ["sabnzbd", "usenet", "frugalusenet", "configuration"]
+tags: ["sabnzbd", "usenet", "newshosting", "configuration"]
 ---
 
 # Configure Download Client (SABnzbd)
@@ -16,11 +16,11 @@ Go to **Config → Servers → Add Server**:
 
 | Field | Value |
 |-------|-------|
-| Server | `news.frugalusenet.com` |
+| Server | `news.newshosting.com` |
 | Port | `563` |
 | SSL | Yes |
-| Username | Your Frugal Usenet username |
-| Password | Your Frugal Usenet password |
+| Username | Your Newshosting username |
+| Password | Your Newshosting password |
 | Connections | Check your plan limit (10–20 is typical) |
 
 Click **Test Server**. A green result means SABnzbd can reach and authenticate with the server.
@@ -46,6 +46,6 @@ Go to **Config → General** and copy the **SABnzbd API Key**. You will need it 
 
 ## Result
 
-SABnzbd is connected to Frugal Usenet and ready to receive jobs. Categories are set up for movies and TV.
+SABnzbd is connected to Newshosting and ready to receive jobs. Categories are set up for movies and TV.
 
 Continue to [Configure Indexers (Prowlarr)](/docs/home-server/media-automation/installation/configure-prowlarr).
