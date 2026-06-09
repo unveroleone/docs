@@ -53,15 +53,16 @@ These paths match what was mounted in the [Mount Storage](/docs/home-server/medi
 
 Jellyfin will scan on startup. The directories will be empty until Sonarr and Radarr download something.
 
-## Set up scan notifications
+## Automatic library updates
 
-To make Jellyfin scan immediately when Sonarr or Radarr imports a file:
+Jellyfin applies automatic scanning settings to **each individual library**, not globally. To make Jellyfin detect new files immediately after Sonarr or Radarr imports them, enable real-time monitoring on each library:
 
-1. In Jellyfin, go to **Administration → Dashboard → API Keys** and create a new key
-2. In Sonarr, go to **Settings → Connect → Add → Emby/Jellyfin**, enter the Jellyfin LXC IP and the API key
-3. Do the same in Radarr
+1. Open the Jellyfin Web Client, click the hamburger menu, and select **Dashboard**
+2. On the left sidebar under the "Server" section, click **Libraries**
+3. Locate the library you want to update (e.g., *Movies* or *TV Shows*), click the **three dots (...)** on its card, and select **Manage Library**
+4. Scroll down near the bottom of the settings popup and check **Enable real-time monitoring**, then click **Save**
 
-This triggers an instant library update after each import instead of waiting for a scheduled scan.
+Repeat for both your Movies and TV Shows libraries. Jellyfin will now pick up new files the moment they appear on disk — no scheduled scan delay.
 
 ## Connect Seerr to Jellyfin
 
