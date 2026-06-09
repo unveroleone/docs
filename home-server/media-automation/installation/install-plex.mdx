@@ -73,13 +73,11 @@ These paths match what was mounted in the [Mount Storage](/docs/home-server/medi
 
 Plex will scan the directories on startup. They will be empty until Sonarr and Radarr download something.
 
-## Set up scan notifications
+## Automatic library updates
 
 To make Plex scan immediately when Sonarr or Radarr imports a file:
 
-1. In Plex, go to **Settings → General** and copy the X-Plex-Token from the URL
-2. In Sonarr, go to **Settings → Connect → Add → Plex Media Server** and enter the Plex LXC IP and token
-3. Do the same in Radarr
+1. In Plex, go to **Settings → Library and enable "Scan my library automatically"
 
 This triggers an instant library update after each import instead of waiting for a scheduled scan.
 
