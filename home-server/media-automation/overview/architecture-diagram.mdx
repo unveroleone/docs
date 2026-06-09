@@ -8,30 +8,11 @@ tags: ["architecture", "plex", "proxmox", "zfs", "docker"]
 
 ## Component Overview
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      Proxmox Host                       │
-│                                                         │
-│  ┌──────────────────┐     ┌──────────────────────────┐  │
-│  │   Plex LXC       │     │       Docker VM          │  │
-│  │  (lxc/103)       │     │      (qemu/102)          │  │
-│  │                  │     │                          │  │
-│  │  Plex Media      │     │  Seerr               │  │
-│  │  Server          │     │  Sonarr   Radarr         │  │
-│  │                  │     │  Prowlarr SABnzbd        │  │
-│  └────────┬─────────┘     └───────────┬──────────────┘  │
-│           │                           │                  │
-│           └──────────┬────────────────┘                  │
-│                      │                                   │
-│         ┌────────────▼────────────┐                      │
-│         │       ZFS Pool (tank)   │                      │
-│         │                         │                      │
-│         │  /mnt/media/movies      │                      │
-│         │  /mnt/media/tv          │                      │
-│         │  /mnt/downloads         │                      │
-│         └─────────────────────────┘                      │
-└─────────────────────────────────────────────────────────┘
-```
+![Media Stack Architecture Diagram](/assets/docs/architecture-media-stack.svg)
+
+> **How to read this diagram:** The user requests content through Seerr (the request portal). Seerr forwards to Sonarr/Radarr, which query Prowlarr for indexer results and then hand the download to SABnzbd. SABnzbd downloads files to `/mnt/downloads`, and Sonarr/Radarr import them into the media library on the ZFS pool. Plex reads from that same pool and streams back to the user.
+>
+> **Focal services** (thick border) are user-facing. **Dashed lines** represent external/remote connections. Everything else runs locally on the Proxmox host.
 
 ## Data Flow
 
