@@ -1,0 +1,117 @@
+---
+title: "Install & Configure Jellyfin"
+description: "Install Jellyfin inside the Debian LXC, connect it to your media libraries, and integrate it with Sonarr, Radarr, and Seerr."
+tags: ["jellyfin", "lxc", "debian", "installation", "libraries"]
+---
+
+# Install & Configure Jellyfin
+
+This page covers Jellyfin. If you chose Plex instead, see [Install & Configure Plex](/docs/home-server/media-automation/installation/install-plex).
+
+With the Jellyfin LXC running and storage mounted, install Jellyfin and connect it to your libraries.
+
+## Install Jellyfin on Debian
+
+Open a shell inside the Jellyfin LXC and run:
+
+```bash
+apt update && apt upgrade -y
+apt install -y curl
+
+# Official Jellyfin install script — adds the repository and installs the package
+curl https://repo.jellyfin.org/install-debuntu.sh | bash
+```
+
+The script detects your Debian version, adds the Jellyfin apt repository, and installs the package. Jellyfin starts automatically after installation.
+
+Verify it is running:
+
+```bash
+systemctl status jellyfin
+```
+
+## Open the web UI
+
+From a browser on your LAN:
+
+```
+http://<jellyfin-lxc-ip>:8096
+```
+
+The setup wizard will guide you through initial configuration. Create an admin account — no external account is required.
+
+## Add media libraries
+
+In the Jellyfin setup wizard (or later via **Administration → Dashboard → Libraries**), add:
+
+| Library type | Path |
+|-------------|------|
+| Movies | `/mnt/media/movies` |
+| TV Shows | `/mnt/media/tv` |
+
+These paths match what was mounted in the [Mount Storage](/docs/home-server/media-automation/installation/mount-storage) step.
+
+Jellyfin will scan on startup. The directories will be empty until Sonarr and Radarr download something.
+
+## Set up scan notifications
+
+To make Jellyfin scan immediately when Sonarr or Radarr imports a file:
+
+1. In Jellyfin, go to **Administration → Dashboard → API Keys** and create a new key
+2. In Sonarr, go to **Settings → Connect → Add → Emby/Jellyfin**, enter the Jellyfin LXC IP and the API key
+3. Do the same in Radarr
+
+This triggers an instant library update after each import instead of waiting for a scheduled scan.
+
+## Connect Seerr to Jellyfin
+
+Seerr supports Jellyfin natively. If you are setting up Seerr for the first time, choose Jellyfin during the setup wizard. If Seerr is already running with Plex, you can add Jellyfin as an additional media server.
+
+1. In Jellyfin, go to **Administration → Dashboard → API Keys** and create a key for Seerr
+2. In the Seerr setup wizard, select **Jellyfin** as your media server
+3. Enter the server URL (`http://<jellyfin-lxc-ip>:8096`) and the API key
+4. Click **Sync Library** to confirm the connection
+
+Users authenticate with Jellyfin accounts you create under **Administration → Users** — no plex.tv account needed.
+
+## GPU passthrough (hardware transcoding)
+
+Hardware transcoding is free in Jellyfin — no paid tier required. To enable it, pass through the GPU from the Proxmox host to the Jellyfin LXC.
+
+**For Intel iGPU (QSV):**
+
+On the Proxmox host, add the following lines to the LXC config file (`/etc/pve/lxc/<id>.conf`):
+
+```
+lxc.cgroup2.devices.allow: c 226:128 rwm
+lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file
+lxc.hook.pre-start: sh -c "chown 100000:100154 /dev/dri/renderD128"
+```
+
+Inside the Jellyfin LXC, add the `jellyfin` user to the render group:
+
+```bash
+usermod -aG render jellyfin
+apt install -y intel-opencl-icd
+systemctl restart jellyfin
+```
+
+**For NVIDIA:**
+
+Install the NVIDIA drivers on the Proxmox host first, then pass the device through to the LXC. Inside the LXC, install the required libraries:
+
+```bash
+apt install -y jellyfin-ffmpeg5 libnvcuvid1 libnvidia-encode1
+```
+
+After passthrough is configured, enable hardware acceleration in Jellyfin under **Administration → Dashboard → Playback** and select your GPU type (Intel QSV, NVIDIA NVENC, or VA-API).
+
+## Remote access
+
+Jellyfin does not include a built-in relay. Remote access requires a reverse proxy. If you are already using Cloudflare Tunnels, add a tunnel pointing to `http://<jellyfin-lxc-ip>:8096` — the setup is the same as for any other service in the stack.
+
+## Result
+
+Jellyfin is installed and connected to your media libraries. No media is available yet — that comes after configuring the download services.
+
+Continue to [Configure Download Client (SABnzbd)](/docs/home-server/media-automation/installation/configure-sabnzbd).
