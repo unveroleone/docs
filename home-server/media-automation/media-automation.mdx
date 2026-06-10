@@ -1,0 +1,203 @@
+---
+title: "Self-Hosted Media Server Guide: Plex or Jellyfin, Automated on Proxmox"
+description: "A complete guide to building a self-hosted media server on Proxmox with Plex or Jellyfin, Sonarr, Radarr, Prowlarr, and SABnzbd. Automated, local, and fully open source."
+tags: ["plex", "jellyfin", "sonarr", "radarr", "prowlarr", "sabnzbd", "proxmox", "media-server", "arr-stack", "usenet", "self-hosted"]
+jsonLd: |
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the arr stack?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The arr stack is a set of open-source automation tools for managing and downloading media: Sonarr (TV shows), Radarr (movies), Prowlarr (indexer management), and optionally Readarr (books). They work together with a download client like SABnzbd to automate finding, downloading, and organizing media. The name comes from the shared -arr suffix in the tool names."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need Plex Pass for a self-hosted media server?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Plex Pass is required for hardware transcoding and remote streaming outside your local network. If you only stream locally and your devices can direct-play without transcoding, the free Plex tier works. The lifetime pass costs $249.99 (rising to $749.99). Jellyfin includes both features at no cost and is a fully free alternative."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does this media server stack use torrents?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. This stack uses Usenet exclusively. SABnzbd connects to a Usenet provider and downloads NZB files located by Prowlarr and sent by Sonarr and Radarr. There are no torrent clients involved."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does a self-hosted media server cost to run?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The minimum ongoing cost is a Usenet provider subscription, around $23 per year with Newshosting's starter plan. Using Jellyfin keeps that as the only recurring cost. Plex adds $69.99 per year for Plex Pass, or a one-time $249.99 lifetime purchase. Sonarr, Radarr, Prowlarr, SABnzbd, Seerr, and Proxmox VE are all free."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I run the arr stack on a NAS instead of Proxmox?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The Docker services (Sonarr, Radarr, Prowlarr, SABnzbd, Seerr) run on any Docker-capable host, including Synology or TrueNAS SCALE. The Proxmox-specific steps in this guide cover ZFS pool creation and LXC container setup, which do not apply to a NAS. The Docker Compose stack and service configuration are the same regardless of host platform."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is Jellyfin as good as Plex for self-hosting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Jellyfin is fully featured and free, including hardware transcoding and remote access. The main difference is app polish: Plex has better support on game consoles like PlayStation and Xbox. Jellyfin works well on all major platforms and is the right choice if you want to avoid Plex Pass and have no dependency on plex.tv."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is SABnzbd?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SABnzbd is an open-source Usenet download client. It connects to a Usenet provider, receives NZB files from Sonarr and Radarr via Prowlarr, and handles downloading, verification, repair, and unpacking. In this stack it runs as a Docker container and deposits completed downloads into a shared directory that Sonarr and Radarr monitor for import."
+        }
+      }
+    ]
+  }
+---
+
+# Self-Hosted Media Server Guide: Plex or Jellyfin, Automated on Proxmox
+
+This is a complete guide to building a self-hosted media server that automates everything from requesting content to streaming it. It is based on my own working setup, running 24/7 on a Proxmox server at home. The stack uses Usenet (not torrents), supports both Plex and Jellyfin, and runs entirely on your own hardware with no cloud dependencies.
+
+## What the stack does
+
+You request a movie or TV show through a web interface, and the system finds it on Usenet, downloads and unpacks it, renames and sorts the files into the correct library folder, and makes it available in Plex or Jellyfin within minutes. No manual steps, no cloud dependency, everything on your own hardware.
+
+## Services in this stack
+
+| Service | Role |
+|---------|------|
+| **Plex** or **Jellyfin** | Media server: streams your library to any device |
+| **Seerr** | Request interface: the web UI where you search and request movies and shows |
+| **Sonarr** | TV show automation: monitors, requests, and organizes episodes |
+| **Radarr** | Movie automation: same as Sonarr, for movies |
+| **Prowlarr** | Indexer manager: connects your Usenet indexers to Sonarr and Radarr |
+| **SABnzbd** | Download client: receives NZB files and downloads from Usenet servers |
+
+See [What this stack does](/docs/home-server/media-automation/overview/what-this-stack-does) for the full deployment architecture: how services are split between LXC and Docker VM, ZFS storage layout, and NFS mounts.
+
+## Plex vs Jellyfin
+
+Both Plex and Jellyfin work with this stack without any changes to Sonarr, Radarr, Prowlarr, SABnzbd, or Seerr. The choice only affects the media server itself.
+
+| | Plex | Jellyfin |
+|--|------|----------|
+| Cost | Free (hardware transcoding and remote access require Plex Pass: $249.99 lifetime, rising to $749.99) | Completely free, all features included |
+| Hardware transcoding | Plex Pass required | Included at no cost |
+| Remote access outside home | Plex Pass required | Included (requires reverse proxy) |
+| Cloud dependency | Yes, requires a plex.tv account | No, fully local with no account needed |
+| App quality | Polished, available on PlayStation and Xbox | Available on all major platforms, slightly less refined on some TVs |
+
+See the [Cost Breakdown](/docs/home-server/media-automation/overview/costs) for full pricing details.
+
+## How media flows through the stack
+
+1. You search for a movie or show in Seerr and submit a request
+2. Seerr forwards the request to Sonarr (TV shows) or Radarr (movies)
+3. Sonarr or Radarr queries Prowlarr to find a matching NZB on your configured Usenet indexers
+4. The NZB is sent to SABnzbd
+5. SABnzbd downloads and unpacks the files from your Usenet provider
+6. Sonarr or Radarr detects the completed download, renames the files, and moves them into the media library
+7. Plex or Jellyfin detects the new files and adds them to your library
+8. The content is ready to stream on any device
+
+The full process from request to playback typically takes under 30 minutes for available content.
+
+## What you need to get started
+
+**Hardware:**
+
+- A server or PC running Proxmox VE (any x86-64 machine with at least 8 GB RAM)
+- At least one hard drive for media storage (ZFS works best with drives of 4 TB or more)
+- Optional: a GPU for hardware transcoding (required for Plex transcoding, free on Jellyfin)
+
+**Accounts and services:**
+
+- A Usenet provider (this guide uses Newshosting at around $23/year for the starter plan)
+- At least one Usenet indexer (NZBgeek or similar; free tiers are sufficient to start)
+- Optional: a Plex Pass if you choose Plex over Jellyfin
+
+The only recurring cost is the Usenet provider. See the [Cost Breakdown](/docs/home-server/media-automation/overview/costs) for exact figures.
+
+## Where to start
+
+**Overview**
+
+- [What this stack does](/docs/home-server/media-automation/overview/what-this-stack-does)
+- [Cost Breakdown](/docs/home-server/media-automation/overview/costs)
+- [Architecture Diagram](/docs/home-server/media-automation/overview/architecture-diagram)
+- [Installation Order](/docs/home-server/media-automation/overview/installation-order)
+- [Automation Flow](/docs/home-server/media-automation/overview/automation-flow)
+
+**Installation**
+
+- [Prerequisites](/docs/home-server/media-automation/installation/prerequisites)
+- [Proxmox Host Preparation](/docs/home-server/media-automation/installation/proxmox-host-preparation)
+- [Create ZFS Pool and Datasets](/docs/home-server/media-automation/installation/create-zfs-pool)
+- [Deploy Docker Compose Stack](/docs/home-server/media-automation/installation/deploy-docker-compose)
+- [Permissions (UID / GID)](/docs/home-server/media-automation/installation/permissions)
+- [Verification and First Test](/docs/home-server/media-automation/installation/verification)
+
+**Services**
+
+- [Plex](/docs/home-server/media-automation/user-facing-services/plex)
+- [Jellyfin](/docs/home-server/media-automation/user-facing-services/jellyfin)
+- [Sonarr](/docs/home-server/media-automation/automation-download/sonarr)
+- [Radarr](/docs/home-server/media-automation/automation-download/radarr)
+- [Prowlarr](/docs/home-server/media-automation/automation-download/prowlarr)
+- [SABnzbd](/docs/home-server/media-automation/automation-download/sabnzbd)
+- [Seerr](/docs/home-server/media-automation/user-facing-services/seerr)
+
+**Operations**
+
+- [Updates](/docs/home-server/media-automation/operations/updates)
+- [Backups](/docs/home-server/media-automation/operations/backups)
+- [Monitoring](/docs/home-server/media-automation/operations/monitoring)
+- [Troubleshooting](/docs/home-server/media-automation/operations/troubleshooting)
+
+**Appendix**
+
+- [Glossary](/docs/home-server/media-automation/appendix/glossary)
+- [Lessons Learned](/docs/home-server/media-automation/appendix/lessons-learned)
+
+## Frequently Asked Questions
+
+### What is the arr stack?
+
+The arr stack is a set of open-source automation tools for managing and downloading media: Sonarr (TV shows), Radarr (movies), Prowlarr (indexer management), and optionally Readarr (books). They work together with a download client like SABnzbd to automate finding, downloading, and organizing media. The name comes from the shared `-arr` suffix in the tool names.
+
+### Do I need Plex Pass?
+
+Plex Pass is required for hardware transcoding and remote streaming outside your local network. If you only stream locally and your devices can direct-play without transcoding, the free Plex tier works. The lifetime pass costs $249.99 currently, rising to $749.99. Jellyfin includes both features at no cost and requires no subscription.
+
+### Does this stack use torrents?
+
+No. This stack uses Usenet exclusively. SABnzbd connects to a Usenet provider and downloads NZB files located by Prowlarr and sent by Sonarr and Radarr. There are no torrent clients involved.
+
+### How much does it cost to run?
+
+The minimum ongoing cost is a Usenet provider subscription, around $23 per year with Newshosting's starter plan. Using Jellyfin, that is the only recurring cost. Plex adds $69.99 per year for Plex Pass, or a one-time $249.99 lifetime purchase. Sonarr, Radarr, Prowlarr, SABnzbd, Seerr, and Proxmox VE are all free to use. See the [Cost Breakdown](/docs/home-server/media-automation/overview/costs) for full details.
+
+### Can I run this on a NAS instead of Proxmox?
+
+Yes. The Docker services (Sonarr, Radarr, Prowlarr, SABnzbd, Seerr) run on any Docker-capable host, including Synology or TrueNAS SCALE. The Proxmox-specific steps in this guide cover ZFS pool creation and LXC container setup, which do not apply to a NAS. The Docker Compose stack and service configuration are the same regardless of the underlying platform.
+
+### Is Jellyfin as good as Plex?
+
+Jellyfin is fully featured and free, including hardware transcoding and remote access. The main difference is app polish: Plex has better support on game consoles, specifically PlayStation and Xbox. Jellyfin covers all other major platforms well. If you do not need console support and want to avoid Plex Pass, Jellyfin is the right choice.
+
+### What is SABnzbd?
+
+SABnzbd is an open-source Usenet download client. It connects to a Usenet provider, receives NZB files from Sonarr and Radarr via Prowlarr, and handles downloading, verification, repair, and unpacking automatically. In this stack it runs as a Docker container and deposits completed downloads into a shared directory that Sonarr and Radarr monitor for import.

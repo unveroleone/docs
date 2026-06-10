@@ -1,52 +1,29 @@
 ---
 title: "What this stack does"
-description: "A self-hosted media stack that handles requesting, downloading, organizing, and streaming media automatically — all running locally on Proxmox. Supports both Plex and Jellyfin."
-tags: ["plex", "jellyfin", "media", "automation", "usenet"]
+description: "How the media automation stack is deployed on Proxmox: services, LXC vs VM split, ZFS storage layout, and what the stack does not cover."
+tags: ["proxmox", "architecture", "lxc", "docker", "zfs", "media", "automation"]
 ---
 
 # What this stack does
 
-This is a self-hosted media stack that handles everything from requesting a movie or show to downloading, organizing, and streaming it — without any manual steps in between.
-
-The full pipeline:
-
-**You request something → it gets downloaded → sorted into your library → available in your media server**
-
-## Choose your media server: Plex or Jellyfin
-
-Before setting up anything, decide which media server to use. Both work with the rest of the stack (Sonarr, Radarr, Prowlarr, SABnzbd, Seerr) without any changes.
-
-| | Plex | Jellyfin |
-|--|------|----------|
-| Cost | Free, hardware transcoding and remote access need Plex Pass ($249.99 lifetime, price rising to $749.99) | Completely free — all features included |
-| Client apps | Polished, available on every platform including PlayStation and Xbox | Available on all major platforms, slightly less refined on some TVs |
-| Hardware transcoding | Plex Pass required | Free |
-| Remote streaming | Plex Pass required | Free (requires reverse proxy setup) |
-| Account required | Yes (plex.tv) | No |
-| No cloud dependency | No (needs plex.tv) | Yes |
-
-**Choose Plex** if you want the most polished app experience across all devices and are comfortable paying for Plex Pass, or already own a lifetime pass.
-
-**Choose Jellyfin** if you want a fully free, open-source setup with no ongoing costs and no dependency on a third-party service.
-
-See the [Cost Breakdown](/docs/home-server/media-automation/overview/costs) for full pricing details, and the individual service pages for setup instructions:
-- [Plex](/docs/home-server/media-automation/user-facing-services/plex)
-- [Jellyfin](/docs/home-server/media-automation/user-facing-services/jellyfin)
+This stack handles everything from requesting a movie or show to downloading, organizing, and streaming it, with no manual steps between request and playback. Every service runs locally on a Proxmox host.
 
 ## Services
 
 | Service | Role |
 |---------|------|
-| **Plex or Jellyfin** | Streams media to any device |
+| **Plex** or **Jellyfin** | Streams media to any device |
 | **Seerr** | Web UI where you (or others) request movies and shows |
 | **Sonarr** | Manages TV shows: monitors, downloads, and organizes episodes |
 | **Radarr** | Same as Sonarr, but for movies |
 | **Prowlarr** | Manages Usenet indexers and syncs them to Sonarr and Radarr |
 | **SABnzbd** | The download client: receives NZBs, downloads from Usenet, and unpacks them |
 
+Not sure whether to use Plex or Jellyfin? See the [Media Automation Guide](/docs/home-server/media-automation/media-automation) for a side-by-side comparison.
+
 ## How it's deployed
 
-**Plex or Jellyfin** both run in their own dedicated LXC container on Proxmox. This gives the media server direct access to ZFS storage via bind mount (no NFS overhead) and makes GPU passthrough easier to configure than inside a VM.
+**Plex or Jellyfin** runs in its own dedicated LXC container on Proxmox. This gives the media server direct access to ZFS storage via bind mount (no NFS overhead) and makes GPU passthrough easier to configure than inside a VM.
 
 **Everything else** — Sonarr, Radarr, Prowlarr, SABnzbd, and Seerr — runs as Docker containers inside a VM on the same Proxmox host, regardless of which media server you choose.
 
