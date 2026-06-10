@@ -70,6 +70,26 @@ SABnzbd moves finished downloads to the category folder and notifies the request
 
 Do not delete files from `/downloads` manually. Sonarr and Radarr clean up after a successful import.
 
+## Performance: keep the incomplete directory local
+
+SABnzbd's hottest I/O happens during download, PAR2 verification, and unpack. These involve writing and reading many large files in rapid succession. If the incomplete directory lives on an NFS share, this phase runs across a network protocol layer and is slower than it needs to be.
+
+The fix: mount a local disk inside the Docker VM and point SABnzbd's incomplete directory at it. Only the finished, unpacked file moves to NFS (your ZFS media library). That move is a single large sequential write, which NFS handles well.
+
+In practice, 150–200 GB of local SSD scratch space is enough for most home setups. A single 4K movie download (50–80 GB compressed) needs roughly double its size during unpack, so 150 GB gives comfortable headroom for one or two concurrent jobs.
+
+See the agent task file at `agents/sabnzbd-local-scratch.md` for step-by-step instructions to add the local disk and reconfigure SABnzbd.
+
+## Security: unwanted extensions and cleanup
+
+Usenet releases occasionally include executables, scripts, or junk metadata alongside the actual content. SABnzbd has two settings to deal with this:
+
+**Unwanted extensions** (Config → Switches): aborts the job if the archive contains files like `.exe`, `.bat`, `.js`, or `.lnk`. Catches fake releases and anything potentially malicious before it reaches your library.
+
+**Cleanup list** (Config → Switches): silently deletes metadata files (`.nfo`, `.sfv`, `.txt`) after a successful download. Keeps your completed folders clean.
+
+Full configuration is in the [Configure SABnzbd](/docs/home-server/media-automation/installation/configure-sabnzbd) installation step.
+
 ## Ports
 
 | Port | Purpose |

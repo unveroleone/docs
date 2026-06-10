@@ -44,8 +44,41 @@ The full download path will be `/downloads/movies` and `/downloads/tv` inside th
 
 Go to **Config → General** and copy the **SABnzbd API Key**. You will need it when adding SABnzbd as a download client in Sonarr and Radarr.
 
+## Security and cleanup settings
+
+These are set once and prevent fake releases and junk files from landing in your library.
+
+Go to **Config → Switches**.
+
+### Unwanted extensions
+
+SABnzbd inspects archives before finishing a job. If it finds a file with one of these extensions, it aborts the download. This catches fake releases (disguised as executables) and anything potentially malicious.
+
+Set **Unwanted extensions** to:
+
+```
+exe, com, bat, cmd, msi, scr, sfx, js, jse, vbs, vbe, ps1, ps2, jar, htm, html, url, lnk
+```
+
+Set **Action on unwanted extensions** to **Abort job**.
+
+### Cleanup list
+
+Files matching this list are deleted silently after a successful download. They serve no purpose in a Sonarr/Radarr library.
+
+Set **Cleanup list** to:
+
+```
+nfo, sfv, srr, nzb, txt, md5
+```
+
+### Samples and nested archives
+
+- Enable **Ignore samples**: removes small preview video files included in some releases.
+- Disable **Recursive unpacking**: prevents SABnzbd from extracting archives inside archives, which can produce unexpected extra files.
+
 ## Result
 
-SABnzbd is connected to Newshosting and ready to receive jobs. Categories are set up for movies and TV.
+SABnzbd is connected to Newshosting and ready to receive jobs. Categories, security filters, and cleanup rules are configured.
 
 Continue to [Configure Indexers (Prowlarr)](/docs/home-server/media-automation/installation/configure-prowlarr).
