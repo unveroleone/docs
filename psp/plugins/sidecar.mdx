@@ -33,23 +33,7 @@ If updating from a previous version, delete the existing sidecar files in `/SEPL
 
 1. Copy `psp_sidecar.prx` to `/SEPLUGINS/` (or `flash0:` if using Leftovers).
 2. Copy `psp_sidecar.ini` to `/SEPLUGINS/` (or `flash1:` if using Leftovers).
-3. Activate the plugin by adding the appropriate line to your config file:
-
-   **ARK CFW:** add to `PLUGINS.TXT`:
-   ```
-   xmb, psp_sidecar.prx, on
-   ```
-
-   **Leftovers:** add to `flash0:PLUGINS.TXT`:
-   ```
-   xmb, psp_sidecar.prx, on
-   ```
-
-   **Non-ARK CFW:** add to `VSH.TXT`:
-   ```
-   ms0:/seplugins/psp_sidecar.prx 1
-   ```
-
+3. Activate the plugin in Plugin Manager to VSH/XMB mode ONLY.
 4. Copy the PSP Sidecar homebrew app folder to `/PSP/GAME/` (or a GCLite subfolder).
 5. Launch the homebrew app and press **X** to generate the cache.
 6. Reboot.
@@ -63,11 +47,6 @@ Edit `psp_sidecar.ini` in `/SEPLUGINS/` to adjust the two available options:
 | `video_menu` | `false` | Set to `true` to keep the XMB VIDEO menu usable on PSP 1000. Costs some performance. |
 | `max_games` | `0` | Maximum number of games to fast-load. `0` fast-loads everything. Set a lower value if 300+ games cause crashes due to low RAM. |
 
-## Supported formats
-
-ISO, CSO, EBOOT.PBP (homebrew, PS1 classics, minis). ZSO, DAX, and JSO are in the spec but untested.
-
-GCLite is optional. If your ISOs are stored flat in `/ISO/` with no subfolders, Sidecar works in that mode as well (v1.2+).
 
 ## Regenerating the cache
 
@@ -75,10 +54,6 @@ The cache must be up to date for the speed gains to apply. Run the PSP Sidecar h
 
 If you want to skip the free-space-scan boost without reinstalling, delete `sidecar_xmb.bin` from your `/SEPLUGINS/` folder. The plugin will leave that optimization off and continue with the rest.
 
-## Changelog
+## Troubleshooting
 
-**v1.3:** Leftovers support, stability improvements, fix for USB mode with large libraries, basic sleep/wake support.
-
-**v1.2:** Non-GCLite support (flat ISO folder), `max_games` INI option, removed ISOCACHE.BIN dependency.
-
-**v1.1:** All GCLite category name formats (`CAT_`, `[]`, plain names), EBOOT.PBP support (homebrew, PS1, minis), mtime-based cache sorting, CSO support, ZSO/DAX/JSO spec (untested), plugin icon.
+If your games show as corrupted, make sure to delete your ISOCACHE.BIN file from `/PSP/SYSTEM/` and regenerate the cache with the homebrew app. If you have a large game library (300+), try setting `max_games` to a lower value in the INI to reduce RAM usage.
