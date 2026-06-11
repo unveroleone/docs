@@ -1,0 +1,84 @@
+---
+title: "PSP Sidecar"
+description: "Cache your PSP game library to memory stick for near-instant XMB boot and game list loading."
+tags: ["psp", "plugins", "sidecar", "xmb", "performance", "cache"]
+---
+
+# PSP Sidecar
+
+PSP Sidecar is a plugin and companion homebrew app that caches your game library's headers and file locations to a small sidecar file on your memory stick. On boot, the plugin loads this cache into RAM and serves it directly to the XMB, eliminating most of the disk seeks the firmware would otherwise perform. The result is a cold boot to XMB that is 5-8 seconds faster and a game list that loads in roughly 2 seconds on a 128 GB card with 100 games, compared to 10-13 seconds without it.
+
+Compatible with [Game Categories Lite](/docs/psp/plugins/game-categories-lite). Works on ARK-5 CFW, tested on PSP 1000.
+
+**Runlevel:** VSH (XMB) only.
+
+## Download
+
+[**Download PSP Sidecar v1.3**](https://qberty.com/download/717/)
+
+## How it works
+
+The plugin intercepts several firmware calls at the XMB level:
+
+- **Free space scan skip:** hooks `sceIoDevctl` and serves a precomputed value for available space, bypassing the full FAT32 cluster scan the firmware runs on every boot.
+- **Game list cache:** hooks `dopen`, `dread`, and `dclose` to intercept the XMB's per-game `PARAM.SFO` and `ICON0` reads. Instead of opening each ISO individually, it synthesizes ISO9660 sectors in RAM using a `VirtualPBP` struct built from the cache file.
+- **Stat pre-computation:** stores per-game `sceIoGetstat` results in the cache, saving 20-50 ms per ISO on highlight.
+- **ISOCACHE.BIN bypass:** pre-generates the cache file ARK parses on cold boot, skipping that disk seek entirely (v1.2+).
+
+The cache file is small enough to fit in the PSP 1000's RAM while still covering the data needed to skip redundant seeks across the full game list.
+
+## Installation
+
+If updating from a previous version, delete the existing sidecar files in `/SEPLUGINS/` and `/PSP/SYSTEM/ISOCACHE.BIN` before proceeding.
+
+1. Copy `psp_sidecar.prx` to `/SEPLUGINS/` (or `flash0:` if using Leftovers).
+2. Copy `psp_sidecar.ini` to `/SEPLUGINS/` (or `flash1:` if using Leftovers).
+3. Activate the plugin by adding the appropriate line to your config file:
+
+   **ARK CFW:** add to `PLUGINS.TXT`:
+   ```
+   xmb, psp_sidecar.prx, on
+   ```
+
+   **Leftovers:** add to `flash0:PLUGINS.TXT`:
+   ```
+   xmb, psp_sidecar.prx, on
+   ```
+
+   **Non-ARK CFW:** add to `VSH.TXT`:
+   ```
+   ms0:/seplugins/psp_sidecar.prx 1
+   ```
+
+4. Copy the PSP Sidecar homebrew app folder to `/PSP/GAME/` (or a GCLite subfolder).
+5. Launch the homebrew app and press **X** to generate the cache.
+6. Reboot.
+
+## Configuration
+
+Edit `psp_sidecar.ini` in `/SEPLUGINS/` to adjust the two available options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `video_menu` | `false` | Set to `true` to keep the XMB VIDEO menu usable on PSP 1000. Costs some performance. |
+| `max_games` | `0` | Maximum number of games to fast-load. `0` fast-loads everything. Set a lower value if 300+ games cause crashes due to low RAM. |
+
+## Supported formats
+
+ISO, CSO, EBOOT.PBP (homebrew, PS1 classics, minis). ZSO, DAX, and JSO are in the spec but untested.
+
+GCLite is optional. If your ISOs are stored flat in `/ISO/` with no subfolders, Sidecar works in that mode as well (v1.2+).
+
+## Regenerating the cache
+
+The cache must be up to date for the speed gains to apply. Run the PSP Sidecar homebrew app and press **X** every time you add or remove games. A stale cache causes the XMB to fall back to slow direct reads on any entry it cannot match.
+
+If you want to skip the free-space-scan boost without reinstalling, delete `sidecar_xmb.bin` from your `/SEPLUGINS/` folder. The plugin will leave that optimization off and continue with the rest.
+
+## Changelog
+
+**v1.3:** Leftovers support, stability improvements, fix for USB mode with large libraries, basic sleep/wake support.
+
+**v1.2:** Non-GCLite support (flat ISO folder), `max_games` INI option, removed ISOCACHE.BIN dependency.
+
+**v1.1:** All GCLite category name formats (`CAT_`, `[]`, plain names), EBOOT.PBP support (homebrew, PS1, minis), mtime-based cache sorting, CSO support, ZSO/DAX/JSO spec (untested), plugin icon.
