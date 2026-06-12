@@ -109,13 +109,109 @@ systemctl restart jellyfin
 
 **For NVIDIA:**
 
-Install the NVIDIA drivers on the Proxmox host first, then pass the device through to the LXC. Inside the LXC, install the required libraries:
+NVIDIA passthrough requires more steps than Intel because the NVIDIA userspace libraries inside the container must match the kernel driver version running on the Proxmox host exactly. There is no distribution package that guarantees this match, so the libraries are mounted directly from the host filesystem into the container.
+
+**Step 1: Install the NVIDIA driver on the Proxmox host**
+
+Follow the standard Debian NVIDIA driver installation on the host. Confirm the driver is loaded:
 
 ```bash
-apt install -y jellyfin-ffmpeg5 libnvcuvid1 libnvidia-encode1
+nvidia-smi
 ```
 
-After passthrough is configured, enable hardware acceleration in Jellyfin under **Administration → Dashboard → Playback** and select your GPU type (Intel QSV, NVIDIA NVENC, or VA-API).
+Note the driver version from the output (e.g. `580.142`). You will need it in step 3.
+
+**Step 2: Configure the LXC**
+
+Add the following to `/etc/pve/lxc/<id>.conf` on the Proxmox host. These lines grant the container access to NVIDIA character devices (major 195), nvidia-uvm (235), DRI (226), framebuffer (29), and input devices (13), then bind-mount the device nodes:
+
+```
+lxc.cgroup2.devices.allow: c 195:* rwm
+lxc.cgroup2.devices.allow: c 235:* rwm
+lxc.cgroup2.devices.allow: c 226:0 rwm
+lxc.cgroup2.devices.allow: c 226:128 rwm
+lxc.cgroup2.devices.allow: c 29:0 rwm
+lxc.cgroup2.devices.allow: c 13:* rwm
+lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file
+lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file
+lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file
+lxc.autodev: 1
+```
+
+Restart the LXC after saving.
+
+**Step 3: Create the ldconfig-init.sh entrypoint script**
+
+Inside the LXC, create `/docker/ldconfig-init.sh`. This wrapper runs `ldconfig` before Jellyfin starts so the container linker picks up the mounted host libraries:
+
+```bash
+#!/bin/sh
+ldconfig
+exec /init "$@"
+```
+
+Make it executable:
+
+```bash
+chmod +x /docker/ldconfig-init.sh
+```
+
+**Step 4: Write the Docker Compose file**
+
+This approach runs Jellyfin in Docker inside the LXC rather than as a native systemd service. The `linuxserver/jellyfin` image bundles its own ffmpeg, so the NVIDIA libraries are mounted from the host as read-only volumes. Replace `580.142` throughout with the version from `nvidia-smi`.
+
+```yaml
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    privileged: true
+    entrypoint: /ldconfig-init.sh
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/London
+    volumes:
+      - /docker/ldconfig-init.sh:/ldconfig-init.sh:ro
+      # NVIDIA libraries — version must match nvidia-smi output on host
+      - /usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.580.142:/usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.580.142:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.1:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so:/usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so:ro
+      - /usr/lib/x86_64-linux-gnu/libnvcuvid.so.580.142:/usr/lib/x86_64-linux-gnu/libnvcuvid.so.580.142:ro
+      - /usr/lib/x86_64-linux-gnu/libnvcuvid.so.1:/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1:ro
+      - /usr/lib/x86_64-linux-gnu/libnvcuvid.so:/usr/lib/x86_64-linux-gnu/libnvcuvid.so:ro
+      - /usr/lib/x86_64-linux-gnu/libcuda.so.580.142:/usr/lib/x86_64-linux-gnu/libcuda.so.580.142:ro
+      - /usr/lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
+      - /usr/lib/x86_64-linux-gnu/libcuda.so:/usr/lib/x86_64-linux-gnu/libcuda.so:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.580.142:/usr/lib/x86_64-linux-gnu/libnvidia-encode.so.580.142:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-encode.so.1:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-encode.so:/usr/lib/x86_64-linux-gnu/libnvidia-encode.so:ro
+      # Jellyfin config and media
+      - ./library:/config
+      - /mnt/jellyfin/jellyfin:/data/tvshows
+      - /mnt/jellyfin/movies:/data/movies
+      - /mnt/jellyfin/transcodes:/mnt/transcodes:rw
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    ports:
+      - 8096:8096
+      - 8920:8920
+      - 7359:7359/udp
+      - 1900:1900/udp
+    restart: unless-stopped
+```
+
+`privileged: true` and `PUID=0`/`PGID=0` are required. Unprivileged access to NVIDIA devices from Docker running inside an LXC does not work reliably; the container needs to run as root.
+
+**Step 5: Enable NVENC in Jellyfin**
+
+After the container starts, go to **Administration → Dashboard → Playback → Hardware acceleration** and select **NVIDIA NVENC**. Save and restart the container. Check the transcoding overlay in the Jellyfin player to confirm GPU usage.
 
 ## Remote access
 
