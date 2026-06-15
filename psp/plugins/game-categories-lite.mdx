@@ -15,3 +15,71 @@ This plugin works on the XMB only. It does not apply to the Custom Launcher.
 ## Download
 
 [**Download Game Categories Lite**](https://github.com/ticky/game-categories-lite/releases/latest).
+
+
+# Configuration
+
+Once enabled, Game Categories Lite adds new options under the PSP's System Settings menu.
+
+**Category Mode:**
+- **Multi MS** — Lists multiple folders instead of a memory stick on the XMB.
+- **Contextual menu** — Shows the storage device; select it to view a list of custom categories.
+- **Folders** — Shows the storage device; select it to load a list of custom folders.
+
+**Category Prefix:**
+- **None** — No prefix required. Name folders however you like.
+- **Use CAT prefix** — Folders must start with `CAT_` to be listed on the XMB.
+
+**Show Uncategorized:**
+- **No** — Hides content not placed inside a custom category folder.
+- **Only Memory Stick** — Shows uncategorized content from the memory stick only.
+- **Only Internal Storage** — Shows uncategorized content from internal storage only (PSP Go).
+- **Both** — Shows all uncategorized content from both storage devices.
+
+**Sort Categories:**
+- **No** — Categories appear in the order they are stored on disk.
+- **Yes** — Sorts categories using numbers in folder names (e.g. `CAT_01PSP`, `01Homebrew`).  
+  Note: Enabling this without a numbering system will cut off the first 2 characters of folder names on the XMB.
+
+## Customizing Folders
+
+With the plugin enabled, create new folders inside `/PSP/GAME/` and `/ISO/` to sort your content. Folder names can use the `CAT_` prefix or be named without one, depending on your Category Prefix setting.
+
+Example with prefix:
+
+```
+/PSP/GAME/
+  CAT_PSX
+  CAT_Homebrew
+  CAT_Emulators
+  CAT_Utility
+
+/ISO/
+  CAT_Action
+  CAT_Racing
+```
+
+- Maximum of 8 category folders (including the uncategorized folder, if enabled).
+- Folder names must not exceed 30 characters.
+
+## Blacklist Filter
+
+To hide certain content (such as DLC) from the category listing:
+
+1. Create a text file at `/seplugins/gclite_filter.txt`.
+2. Add one folder name to exclude per line.
+3. Ensure the file ends with an empty new line, then save.
+
+## Translations
+
+The plugin includes a `translations` folder. To use one, copy the desired language file into `/seplugins/` and set your PSP system language to match.
+
+Example: Copy `category_lite_es.txt` to `/seplugins/` and switch your system language to Spanish.
+
+## Notes
+
+- Changing the Category Mode affects how fast folders and their contents load.
+
+## Download
+
+[**Download Game Categories Lite**](https://github.com/ticky/game-categories-lite/releases/latest).
