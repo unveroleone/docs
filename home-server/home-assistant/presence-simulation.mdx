@@ -1,0 +1,306 @@
+---
+title: "Home Presence Simulation"
+description: "How I built a presence simulation in Home Assistant using PyScript: a randomized lighting schedule that runs while the house is empty, with a toggle to enable it and a scheduler that restarts every night. Includes the full script."
+tags: ["home assistant", "pyscript", "presence simulation", "automation", "security", "lighting"]
+---
+
+# Home Presence Simulation
+
+When the house is empty for an extended period, lights that never turn on are one of the more obvious tells from the street. Home Assistant's built-in "Presence Simulation" integration replays your actual light history, which is a good default but ties the simulation to whatever you happened to do on previous days. I wanted a version that runs on its own schedule, defined once, with enough randomness that it doesn't look mechanical.
+
+## Why PyScript instead of an automation
+
+The stock automation editor can handle a handful of time-triggered actions, but a full evening schedule with per-step randomization and a single on/off toggle turns into a large number of automations that are awkward to review as a group. PyScript lets the whole schedule live in one file as a Python script, still running inside Home Assistant with full access to `light.turn_on`, `scene.turn_on`, and the rest of the service calls.
+
+This uses PyScript's custom integration (`pyscript`), not the sandboxed `python_script` integration that ships with core Home Assistant. `python_script` blocks `import` statements entirely, which rules out `random`. PyScript needs one extra line in `configuration.yaml`:
+
+```yaml
+pyscript:
+  allow_all_imports: true
+```
+
+## Structure of the script
+
+**A dict of controllable lights.** Only lights listed here are within reach of the script, including its `all_off` step. Entity IDs and room names below are placeholders, not what's actually in my config.
+
+```python
+LIGHTS = {
+    "living_room":  "light.living_room",
+    "bedroom_1":    "light.bedroom_1",
+    "bedroom_2":    "light.bedroom_2",
+    "toilet":       "light.toilet",
+    "office":       "light.office",
+    "bathroom":     "light.bathroom",
+    "bedroom_3":    "light.bedroom_3",
+    "bedroom_4":    "light.bedroom_4",
+    "kitchen":      "light.kitchen",
+    "bedroom_1b":   "light.bedroom_1_accent",
+}
+```
+
+**A dict of scenes.** Scenes in Home Assistant are one-shot snapshots: activating one applies a fixed state to a set of lights, but the scene itself has no on/off state and can't be "turned off" later. Only the lights it touched can be turned off.
+
+```python
+SCENES = {
+    "relax": "scene.chill",
+    "work":  "scene.work",
+}
+```
+
+**A guard toggle.** An `input_boolean` helper gates whether the scheduler does anything on a given night, created through Settings → Helpers → Add → Toggle. An empty guard string is treated as "always run" so the script doesn't fail if the helper is ever removed.
+
+```python
+GUARD = "input_boolean.presence_simulation"
+```
+
+**An ordered day plan.** A list of steps, each a dict with a time, an action, a target, extra service-call data, and a randomization offset. Steps have to be written in chronological order; the scheduler walks the list top to bottom and sleeps until each step's time, it does not sort them itself.
+
+```python
+PLAN = [
+    # --- Morning: someone wakes up ---
+    {"time": "07:15", "action": "light_on",  "target": "living_room", "offset": 10},
+    {"time": "07:50", "action": "light_on",  "target": "bathroom",    "offset": 5},
+    {"time": "07:58", "action": "light_off", "target": "bathroom",    "offset": 3},
+    {"time": "08:10", "action": "light_off", "target": "living_room", "offset": 5},
+    {"time": "08:30", "action": "light_on",  "target": "office",      "offset": 10},
+    {"time": "08:50", "action": "scene_on",  "target": "work",        "offset": 10},
+
+    # --- Evening: family home, cooking, activity ---
+    {"time": "18:30", "action": "light_on",  "target": "living_room", "offset": 15},
+    {"time": "18:35", "action": "light_on",  "target": "kitchen",     "offset": 10},
+    {"time": "19:10", "action": "light_off", "target": "kitchen",     "offset": 10},
+    {"time": "19:15", "action": "scene_on",  "target": "relax",       "offset": 12},
+    {"time": "20:00", "action": "light_on",  "target": "toilet",      "offset": 5},
+    {"time": "20:08", "action": "light_off", "target": "toilet",      "offset": 3},
+    {"time": "21:00", "action": "light_on",  "target": "bedroom_2",   "offset": 15},
+    {"time": "21:15", "action": "light_on",  "target": "bedroom_3",   "offset": 12},
+    {"time": "21:45", "action": "light_on",  "target": "bedroom_4",   "offset": 10},
+    {"time": "22:00", "action": "light_on",  "target": "toilet",      "offset": 5},
+    {"time": "22:07", "action": "light_off", "target": "toilet",      "offset": 3},
+    {"time": "22:15", "action": "light_off", "target": "bedroom_2",   "offset": 8},
+
+    # --- Winding down ---
+    {"time": "22:30", "action": "scene_on",  "target": "relax",       "offset": 5},
+    {"time": "22:50", "action": "light_off", "target": "living_room", "offset": 5},
+    {"time": "22:55", "action": "light_off", "target": "office",      "offset": 5},
+    {"time": "23:00", "action": "light_off", "target": "bedroom_3",   "offset": 8},
+    {"time": "23:10", "action": "light_off", "target": "bedroom_4",   "offset": 8},
+
+    # --- Lights out ---
+    {"time": "23:30", "action": "all_off",   "target": None,          "offset": 10},
+    {"time": "23:45", "action": "light_off", "target": "bedroom_1b",  "offset": 5},
+]
+```
+
+`action` is one of `scene_on`, `light_on`, `light_off`, or `all_off`. `offset` is a maximum number of minutes the step's time can shift in either direction, picked with `random.randint`, so the same plan doesn't fire at identical timestamps two nights in a row. Brightness and color temperature are deliberately left out of every step; letting lights and scenes use their own defaults was simpler to reason about than tuning per-step values that would rarely get looked at again.
+
+## Handling lights that only exist inside scenes
+
+Some scenes touch lights that were never added to `LIGHTS`, since they were only ever meant to be set, not turned off individually. `scene.chill` and `scene.work`, for example, also affect a light that lives outside `LIGHTS`. Because `all_off` only iterates over `LIGHTS.values()`, it can't reach that light.
+
+Rather than making `all_off` scene-aware, the fix is a convention: any light that needs a guaranteed-off at the end of the night gets added to `LIGHTS` and gets its own explicit `light_off` step near the end of the plan, in addition to the general `all_off` step. That's `bedroom_1b` in the plan above: it exists specifically because that light is scene-controlled but still needs a hard off at 23:45. It's a manual rule to keep in mind when adding a new scene, not something the script enforces automatically.
+
+## The scheduler
+
+Two stacked `@time_trigger` decorators mean the function runs once when Home Assistant starts and again every midnight, so a restart mid-evening doesn't leave the house without a schedule for the rest of the night. `task.unique(..., kill_me=True)` stops a new run from overlapping with one still in progress, which matters if a config reload or a second midnight trigger fires before the previous run has finished sleeping through its steps.
+
+```python
+@time_trigger("startup")
+@time_trigger("cron(0 0 * * *)")
+def presence_simulation():
+    task.unique("presence_sim_task", kill_me=True)
+
+    if not _guard_active():
+        log.info("[presence_sim] guard is off, skipping today")
+        return
+
+    now = datetime.now()
+    log.info(f"[presence_sim] starting day plan ({len(PLAN)} steps)")
+
+    for step in PLAN:
+        run_at = _resolve_run_time(step, now)
+
+        if run_at <= datetime.now():
+            log.debug(f"[presence_sim] skipping past step: {step['time']}")
+            continue
+
+        wait_sec = (run_at - datetime.now()).total_seconds()
+        task.sleep(wait_sec)
+
+        if not _guard_active():
+            log.info("[presence_sim] guard turned off, stopping")
+            return
+
+        _execute(step)
+
+    log.info("[presence_sim] day plan complete")
+```
+
+## Full script
+
+```python
+import random
+from datetime import datetime, timedelta
+
+# ---------------------------------------------------------------------------
+# Lights (add or remove entries to match what you want the sim to control)
+# ---------------------------------------------------------------------------
+LIGHTS = {
+    "living_room":  "light.living_room",
+    "bedroom_1":    "light.bedroom_1",
+    "bedroom_2":    "light.bedroom_2",
+    "toilet":       "light.toilet",
+    "office":       "light.office",
+    "bathroom":     "light.bathroom",
+    "bedroom_3":    "light.bedroom_3",
+    "bedroom_4":    "light.bedroom_4",
+    "kitchen":      "light.kitchen",
+    "bedroom_1b":   "light.bedroom_1_accent",
+}
+
+# ---------------------------------------------------------------------------
+# Scenes already created in HA
+# ---------------------------------------------------------------------------
+SCENES = {
+    "relax": "scene.chill",
+    "work":  "scene.work",
+}
+
+# ---------------------------------------------------------------------------
+# Guard: set to an input_boolean entity_id to gate the simulation.
+# Leave empty ("") to always run.
+# Create one in HA: Settings -> Helpers -> Add -> Toggle, then paste the id here.
+# ---------------------------------------------------------------------------
+GUARD = "input_boolean.presence_simulation"
+
+# ---------------------------------------------------------------------------
+# Day plan - steps MUST be in chronological order.
+#
+# Each entry:
+#   time    - "HH:MM" (24h local time)
+#   action  - "scene_on" | "light_on" | "light_off" | "all_off"
+#   target  - key from LIGHTS or SCENES above (None for all_off)
+#   data    - extra kwargs for the service call:
+#               light_on  -> brightness_pct (0-100), color_temp_kelvin, transition (sec)
+#               scene_on  -> transition (sec)
+#               light_off -> transition (sec)
+#             omit or leave {} to use defaults
+#   offset  - max random shift in minutes (+-). offset: 10 means the step
+#             fires anywhere between -10 min and +10 min from the listed time.
+#             Use this so the house never looks robotic.
+# ---------------------------------------------------------------------------
+PLAN = [
+    # --- Morning: someone wakes up ---
+    {"time": "07:15", "action": "light_on",  "target": "living_room", "offset": 10},
+    {"time": "07:50", "action": "light_on",  "target": "bathroom",    "offset": 5},
+    {"time": "07:58", "action": "light_off", "target": "bathroom",    "offset": 3},
+    {"time": "08:10", "action": "light_off", "target": "living_room", "offset": 5},
+    {"time": "08:30", "action": "light_on",  "target": "office",      "offset": 10},
+    {"time": "08:50", "action": "scene_on",  "target": "work",        "offset": 10},
+
+    # --- Daytime: house is quiet ---
+
+    # --- Evening: family home, cooking, activity ---
+    {"time": "18:30", "action": "light_on",  "target": "living_room", "offset": 15},
+    {"time": "18:35", "action": "light_on",  "target": "kitchen",     "offset": 10},
+    {"time": "19:10", "action": "light_off", "target": "kitchen",     "offset": 10},
+    {"time": "19:15", "action": "scene_on",  "target": "relax",       "offset": 12},
+    {"time": "20:00", "action": "light_on",  "target": "toilet",      "offset": 5},
+    {"time": "20:08", "action": "light_off", "target": "toilet",      "offset": 3},
+    {"time": "21:00", "action": "light_on",  "target": "bedroom_2",   "offset": 15},
+    {"time": "21:15", "action": "light_on",  "target": "bedroom_3",   "offset": 12},
+    {"time": "21:45", "action": "light_on",  "target": "bedroom_4",   "offset": 10},
+    {"time": "22:00", "action": "light_on",  "target": "toilet",      "offset": 5},
+    {"time": "22:07", "action": "light_off", "target": "toilet",      "offset": 3},
+    {"time": "22:15", "action": "light_off", "target": "bedroom_2",   "offset": 8},
+
+    # --- Winding down ---
+    {"time": "22:30", "action": "scene_on",  "target": "relax",       "offset": 5},
+    {"time": "22:50", "action": "light_off", "target": "living_room", "offset": 5},
+    {"time": "22:55", "action": "light_off", "target": "office",      "offset": 5},
+    {"time": "23:00", "action": "light_off", "target": "bedroom_3",   "offset": 8},
+    {"time": "23:10", "action": "light_off", "target": "bedroom_4",   "offset": 8},
+
+    # --- Lights out ---
+    {"time": "23:30", "action": "all_off",   "target": None,          "offset": 10},
+    {"time": "23:45", "action": "light_off", "target": "bedroom_1b",  "offset": 5},
+]
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _resolve_run_time(step, base_date):
+    h, m = map(int, step["time"].split(":"))
+    max_shift = step.get("offset", 0) * 60
+    shift = random.randint(-max_shift, max_shift) if max_shift else 0
+    return base_date.replace(hour=h, minute=m, second=0, microsecond=0) + timedelta(seconds=shift)
+
+
+def _guard_active():
+    if not GUARD:
+        return True
+    return state.get(GUARD) == "on"
+
+
+def _execute(step):
+    action = step["action"]
+    target = step.get("target")
+    data   = step.get("data", {})
+
+    if action == "scene_on":
+        entity_id = SCENES[target]
+        scene.turn_on(entity_id=entity_id, **data)
+        log.info(f"[presence_sim] scene on: {entity_id}")
+
+    elif action == "light_on":
+        entity_id = LIGHTS[target]
+        light.turn_on(entity_id=entity_id, **data)
+        log.info(f"[presence_sim] light on: {entity_id}")
+
+    elif action == "light_off":
+        entity_id = LIGHTS[target]
+        light.turn_off(entity_id=entity_id)
+        log.info(f"[presence_sim] light off: {entity_id}")
+
+    elif action == "all_off":
+        for entity_id in LIGHTS.values():
+            light.turn_off(entity_id=entity_id)
+        log.info("[presence_sim] all lights off")
+
+
+# ---------------------------------------------------------------------------
+# Main scheduler - runs at startup and restarts every midnight
+# ---------------------------------------------------------------------------
+
+@time_trigger("startup")
+@time_trigger("cron(0 0 * * *)")
+def presence_simulation():
+    task.unique("presence_sim_task", kill_me=True)
+
+    if not _guard_active():
+        log.info("[presence_sim] guard is off, skipping today")
+        return
+
+    now = datetime.now()
+    log.info(f"[presence_sim] starting day plan ({len(PLAN)} steps)")
+
+    for step in PLAN:
+        run_at = _resolve_run_time(step, now)
+
+        if run_at <= datetime.now():
+            log.debug(f"[presence_sim] skipping past step: {step['time']}")
+            continue
+
+        wait_sec = (run_at - datetime.now()).total_seconds()
+        task.sleep(wait_sec)
+
+        if not _guard_active():
+            log.info("[presence_sim] guard turned off, stopping")
+            return
+
+        _execute(step)
+
+    log.info("[presence_sim] day plan complete")
+```

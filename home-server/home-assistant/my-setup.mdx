@@ -1,0 +1,40 @@
+---
+title: "My Home Assistant Setup"
+description: "The hardware and virtual machine behind my Home Assistant instance: Proxmox host specs, the HAOS VM, and the radio hardware it manages."
+tags: ["home assistant", "haos", "proxmox", "homelab", "zigbee", "enocean"]
+---
+
+# My Home Assistant Setup
+
+Home Assistant runs as its own virtual machine on the same Proxmox host that hosts my media stack and other services. This page covers that host, the HAOS VM itself, and the radio hardware passed through to it.
+
+## Proxmox host
+
+| Component | Spec |
+|---|---|
+| Motherboard | ASUS TUF GAMING B550-PLUS |
+| CPU | AMD Ryzen 5 5600G |
+| RAM | 32 GB DDR4 |
+| GPU | NVIDIA GTX 1650 Windforce OC, 4 GB VRAM (passed through to the media server LXC, not used by HAOS) |
+| Boot disk | 512 GB NVMe SSD, LVM thin pool for VM and container disks |
+
+Storage beyond the boot disk is ZFS: a mirrored `tank` pool (2x 3 TB) and a single-disk `media` pool (18 TB), both used by the media automation stack rather than Home Assistant.
+
+## HAOS virtual machine
+
+Home Assistant OS runs in its own VM rather than as a Docker container or an LXC. HAOS ships as a full OS image with its own update mechanism (Supervisor), and running it as a VM keeps that update path intact and gives it direct control over passed-through USB hardware.
+
+| Setting | Value |
+|---|---|
+| VM ID | 100 |
+| RAM | 6144 MB |
+| vCPUs | 2 (host CPU type) |
+| Disk | 32 GB |
+| BIOS | OVMF (UEFI) |
+| Guest OS type | Linux (l26) |
+
+The VM sits alongside three other guests on the same host: a Docker VM running the arr stack, an LXC running Plex with GPU passthrough, and an LXC running N8N. None of them compete with HAOS for the passed-through USB devices below, since Proxmox binds those devices to VM 100 specifically.
+
+## Passed-through radio hardware
+
+Two USB dongles are passed through directly to the HAOS VM so Home Assistant talks to the radio hardware without going through the host's own drivers: a Zigbee dongle (`10c4:ea60`) and an EnOcean USB 300 (`0403:6001`). See [Home Assistant Hardware](/docs/home-server/home-assistant/hardware) for the exact models and what each one drives.

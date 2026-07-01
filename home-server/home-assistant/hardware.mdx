@@ -1,0 +1,57 @@
+---
+title: "Home Assistant Hardware"
+description: "The radio dongles and actuators my Home Assistant setup talks to: a Sonoff Zigbee 3.0 USB dongle and an EnOcean USB 300, both passed through to the HAOS VM."
+tags: ["home assistant", "zigbee", "enocean", "hardware", "sonoff", "usb300"]
+---
+
+# Home Assistant Hardware
+
+Two USB radio dongles are passed through from the Proxmox host directly to the HAOS VM (see [My Home Assistant Setup](/docs/home-server/home-assistant/my-setup)), one per protocol.
+
+## Zigbee: Sonoff Zigbee 3.0 USB Dongle Plus (ZBDongle-P)
+
+[Sonoff ZBDongle-P](https://sonoff.tech/products/sonoff-zigbee-3-0-usb-dongle-plus-zbdongle-p) appears as `/dev/ttyUSB1` inside the VM.
+
+<img src="https://sonoff.tech/cdn/shop/files/ZBDongle-E-1.png?v=1778658239&width=1400" alt="Sonoff Zigbee 3.0 USB Dongle Plus" width="300" />
+
+| Spec | Value |
+|---|---|
+| Radio chip | Texas Instruments CC2652P |
+| USB-serial bridge | Silicon Labs CP2102N |
+| Coordinator firmware | Z-Stack 3.x (ZNP), pre-flashed |
+| TX power | Up to +20 dBm |
+| Connector | USB Type-A |
+
+## EnOcean: EnOcean USB 300
+
+[EnOcean USB 300](https://www.mouser.ch/ProductDetail/EnOcean/USB-300?qs=Jm2GQyTW%2FbhD1KXvN3G6SA%3D%3D&mgh=1) appears as `/dev/ttyUSB0` inside the VM.
+
+<img src="https://www.berrybase.ch/media/97/dd/16/1729404274/EnOceanUSB300USB-Gateway868MHzmitTCM310Chipsatz-210476.webp?ts=1750798153" alt="EnOcean USB 300" width="300" />
+
+| Spec | Value |
+|---|---|
+| Transceiver module | EnOcean TCM 310 |
+| Frequency | 868.3 MHz (EU ISM band) |
+| Communication | Bidirectional serial gateway over USB |
+| Supported EEPs | All (both RX and TX) |
+| Dimensions | 70 x 23 x 9 mm |
+| Connector | USB Type-A |
+
+### Blind actuators: Omnio UPJ230/12
+
+[Omnio UPJ230/12](https://www.galaxus.ch/en/s4/product/omnio-enocean-blind-actuator-1-channel-upj23012-shutter-actuator-actuator-5806117), by AWAG Elektrotechnik AG.
+
+<img src="https://static01.galaxus.com/productimages/6/2/3/9/6/0/3/0/2/1/9/9/6/8/7/9/1/1/7/4bd90dfd-b0eb-4b25-b0b7-4253651dc7f5_cropped.jpg_720.jpeg" width="300" />
+
+| Spec | Value |
+|---|---|
+| Manufacturer | AWAG Elektrotechnik AG (Omnio) |
+| Rated voltage | 230 V AC |
+| Outputs | 2 interlocked potential-free contacts, 6 A each |
+| Channels | 1 (one motor per actuator) |
+| EEP profile | D2-05-00, bidirectional |
+| Mounting | Flush-mount (Unterputz), fits standard plastic wall boxes |
+| Radio | 868 MHz, EnOcean, up to 50 transmitters per actuator |
+| Extras | Built-in repeater function, programmable via ARCO |
+
+

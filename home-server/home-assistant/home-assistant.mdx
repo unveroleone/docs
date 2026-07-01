@@ -3,4 +3,11 @@ title: "Home Assistant"
 description: "Home Assistant setup, configuration, and automations for my self-hosted home server."
 tags: ["home assistant", "home automation", "hass", "hassio"]
 ---
-# Home Assistant (more coming soon)
+
+# Home Assistant
+
+Home Assistant runs my home automation: lighting, blinds, and a presence simulation that runs while the house is empty. It's deployed as its own VM on Proxmox, alongside the media automation stack.
+
+- [My Home Assistant Setup](/docs/home-server/home-assistant/my-setup): the Proxmox host, the HAOS VM, and the Zigbee and EnOcean hardware passed through to it.
+- [Hardware](/docs/home-server/home-assistant/hardware): the Zigbee and EnOcean USB dongles and the blind actuators they drive.
+- [Home Presence Simulation](/docs/home-server/home-assistant/presence-simulation): a PyScript-based lighting schedule that runs while the house is empty, built to look less mechanical than a replay of past light history.
