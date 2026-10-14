@@ -37,6 +37,12 @@ An early version of this setup ran Plex inside Docker alongside the other servic
 
 Moving Plex to a dedicated LXC solved both problems. The LXC has direct access to storage via bind mounts, and GPU passthrough is handled at the Proxmox level with a few config lines.
 
+## Client updates can break a working setup
+
+The server side of this stack was stable for months, but a client app update on Apple TV and Android TV in autumn 2026 removed settings and broke playback features I relied on. Nothing on the server had changed.
+
+The fix is to treat client apps like any other dependency: turn off automatic updates on devices the household depends on, update one device first, and know how to roll back before you need to. The steps are in [Updates](/docs/home-server/media-automation/operations/updates).
+
 ---
 
 *Have something to add? This page is a living document.*

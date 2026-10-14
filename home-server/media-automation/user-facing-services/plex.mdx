@@ -16,9 +16,21 @@ Plex has the widest client support of any self-hosted media server. The apps are
 
 **Plex Pass** (paid subscription) adds hardware transcoding, remote streaming outside your home network, offline sync, and multi-user home management. Hardware transcoding is the main reason to buy it — without it, the server has to software-transcode every stream that doesn't match the client's native format, which is CPU-intensive.
 
-Plex Pass pricing: $6.99/month, $69.99/year, or $249.99 lifetime. The lifetime price is expected to increase to $749.99 — buy before that if you plan to use Plex long-term.
+Plex Pass pricing: $6.99/month, $69.99/year, or $749.99 lifetime. The lifetime price rose from $249.99 on July 1, 2026, according to [Plex's announcement](https://www.plex.tv/blog/new-lifetime-plex-pass-pricing/). Existing lifetime holders keep their pass, and the monthly and annual prices did not change. At $749.99, the lifetime pass takes about eleven years to pay off against the annual plan.
+
+Remote streaming outside your home needs a Plex Pass on the server owner's account, or a per-account Remote Watch Pass for people who stream from someone else's server.
 
 If you are not ready to commit to Plex Pass, consider [Jellyfin](/docs/home-server/media-automation/user-facing-services/jellyfin) instead — it includes hardware transcoding and remote access for free.
+
+## Client app updates can break a working setup
+
+In September and October 2026 Plex rolled out a redesigned app on Apple TV and Android TV. Many users reported removed settings, slower navigation and subtitle problems. The server was not affected, only the client app. I wrote up what people report, how to roll back the Apple TV app to the last old version (8.45) and what to use instead in [Plex's New App Is a Mess](/blog/plex-new-app-rollback-alternatives).
+
+If a client update breaks something you rely on:
+
+1. Turn off automatic app updates on that device so the problem does not get worse.
+2. Roll back the app if the platform allows it (Apple TV and Android TV do, Roku and most smart TVs do not).
+3. Try another client for the same server, such as Infuse or Plezy, or run [Jellyfin](/docs/home-server/media-automation/user-facing-services/jellyfin) next to Plex and move one device at a time.
 
 ## Alternatives
 
@@ -29,8 +41,8 @@ If you are not ready to commit to Plex Pass, consider [Jellyfin](/docs/home-serv
 | | Plex | Jellyfin | Emby |
 |--|------|----------|------|
 | Cost | Free (HW transcoding and remote need Pass) | Free — all features included | Free (some features paid) |
-| Plex Pass / equivalent | $249.99 lifetime (rising to $749.99) | Not needed | Emby Premiere required |
-| Client apps | Excellent, incl. PlayStation and Xbox | Good, all major platforms | Good |
+| Plex Pass / equivalent | $749.99 lifetime (was $249.99 before July 1, 2026) | Not needed | Emby Premiere required |
+| Client apps | Wide support, incl. PlayStation and Xbox (redesigned TV apps still settling, see below) | Good, all major platforms | Good |
 | Hardware transcoding | Plex Pass required | Free | Emby Premiere required |
 | Remote access | Plex Pass required (built-in relay) | Free (manual reverse proxy) | Manual setup |
 | Account required | Yes | No | No |

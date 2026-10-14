@@ -12,18 +12,28 @@ In this stack, Jellyfin runs in a dedicated LXC container on Proxmox, exactly li
 
 ## Why Jellyfin
 
-The main reason to choose Jellyfin over Plex is cost. Hardware transcoding, HDR tone mapping, and remote streaming are all free. Plex gates these features behind a $249.99 lifetime pass (expected to rise to $749.99).
+The main reason to choose Jellyfin over Plex is cost. Hardware transcoding, HDR tone mapping, and remote streaming are all free. Plex gates these features behind a Plex Pass, which costs $6.99 a month, $69.99 a year or $749.99 lifetime (the lifetime price was $249.99 until July 1, 2026).
 
 The other reason is independence. Jellyfin has no external dependencies. No account, no cloud authentication, no telemetry. The server works fully offline and is not tied to any third-party service.
 
 Where Plex still has an edge: client app quality on smart TVs and consoles. Plex has native apps on PlayStation and Xbox. Jellyfin's apps on some TV platforms are less refined, though the gap has narrowed with recent releases. The web interface, Android, and iOS apps are solid.
+
+## Try Jellyfin next to Plex
+
+You do not have to switch to test Jellyfin. It installs in its own container beside Plex and can read the same media folders, so both servers run on one library while you compare them.
+
+- Give the Jellyfin container its own LXC, as described in [Install & Configure Jellyfin](/docs/home-server/media-automation/installation/install-jellyfin).
+- Mount the media folders into it read-only (`ro=1` on the mount point in Proxmox), so the two servers never write to the same files.
+- Move one device at a time. On Apple devices, Swiftfin is the official Jellyfin client, and Infuse and Plezy also work with Jellyfin servers.
+
+Reports from Plex users who tried this are mixed. Some prefer Jellyfin's interface, while others stayed on Plex because their family finds it easier to sign in and share libraries. The Plex client situation is covered in [Plex's New App Is a Mess](/blog/plex-new-app-rollback-alternatives).
 
 ## Comparison
 
 | | Plex | Jellyfin | Emby |
 |--|------|----------|------|
 | Cost | Free (hardware transcoding and remote need Pass) | Free — all features included | Free (some features paid) |
-| Plex Pass / equivalent | $249.99 lifetime (rising to $749.99) | Not needed | Emby Premiere required |
+| Plex Pass / equivalent | $749.99 lifetime (was $249.99 before July 1, 2026) | Not needed | Emby Premiere required |
 | Client apps | Excellent, incl. PlayStation and Xbox | Good, all major platforms | Good |
 | Hardware transcoding | Plex Pass required | Free | Emby Premiere required |
 | Remote access | Plex Pass required (built-in relay) | Free (manual reverse proxy) | Manual setup |

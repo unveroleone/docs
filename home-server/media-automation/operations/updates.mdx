@@ -55,6 +55,16 @@ To check the currently installed version:
 dpkg -l plexmediaserver
 ```
 
+## Plex client apps
+
+The server and the client apps update separately. A server that works fine can still look broken after a client update, as happened with the redesigned Apple TV and Android TV apps in autumn 2026.
+
+- Apple TV: Settings, Apps, Automatically Update Apps, set to Off.
+- Android TV and Shield: in the Play Store, open the Plex app page, open the menu and turn off Enable auto update.
+- Read the [Plex release notes](https://forums.plex.tv/t/plex-for-mobile-tvs-android-mobile-ios-android-tv-tvos-fire-tv/909610) before you update a device that the whole household uses.
+
+If an update already broke something, [Plex's New App Is a Mess](/blog/plex-new-app-rollback-alternatives) explains how to roll back the Apple TV app and what to use instead.
+
 ## Proxmox host
 
 Keep the Proxmox host itself updated separately:
