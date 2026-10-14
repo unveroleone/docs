@@ -37,6 +37,14 @@ An early version of this setup ran Plex inside Docker alongside the other servic
 
 Moving Plex to a dedicated LXC solved both problems. The LXC has direct access to storage via bind mounts, and GPU passthrough is handled at the Proxmox level with a few config lines.
 
+## A silent auto-update is the worst kind of broken
+
+My Plex container had a daily cron job that upgraded the package, and the log said "plexmediaserver is already the newest version" every night. For three weeks that was wrong. Plex had published a newer version to its repository on September 10, 2026, and the container stayed on the old one until I fixed it on October 2.
+
+The job only ran `apt-get install --only-upgrade`, which never refreshes the package lists. I had assumed the system's daily apt timer did that. In this minimal Debian LXC container the timer ran and reported success, but it did nothing, because no periodic apt settings were configured and every interval defaulted to zero. The tell was in the filesystem: the package list files for the Plex repository still had a modification time from weeks earlier.
+
+The fix was to run `apt-get update` inside the same cron job, so it no longer depends on anything else. The takeaway is general: a job that logs "nothing to do" is only trustworthy if you know it looked at fresh data. See [Updates](/docs/home-server/media-automation/operations/updates) for the working job.
+
 ## Client updates can break a working setup
 
 The server side of this stack was stable for months, but a client app update on Apple TV and Android TV in autumn 2026 removed settings and broke playback features I relied on. Nothing on the server had changed.

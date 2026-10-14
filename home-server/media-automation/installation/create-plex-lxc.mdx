@@ -54,6 +54,8 @@ Click **Create CT** in the top right. Configure it as follows:
 
 ![Memory settings](/assets/docs/template5.png)
 
+2048 MB is enough to start. On my host Plex later hit that cap during library scans and transcodes, and the swap monitor alerted constantly because cold pages stayed in swap. I raised the container to 4096 MB with `pct set 103 --memory 4096 --swap 1024` (use your own container ID) and rebooted it to clear the stale swap. If you run alerts on swap, alert on swap together with low available RAM, because swap alone is misleading inside an LXC container.
+
 **Network**
 - Leave as default (DHCP or set a static IP)
 

@@ -49,6 +49,18 @@ apt install --only-upgrade plexmediaserver
 
 Plex restarts automatically after the upgrade. Active streams may be interrupted briefly.
 
+### Automating the Plex update
+
+On Linux, Plex does not install its own updates. Its built-in updater only tells you that a new version exists, and you get it once Plex publishes the package to its apt repository. That can lag behind the announcement by weeks, so a log line saying the package is already the newest version does not always mean you are current.
+
+A daily cron job in `/etc/cron.d/plex-update` keeps the container up to date:
+
+```text
+30 5 * * * root apt-get update -qq >> /var/log/plex-update.log 2>&1 && apt-get install -y --only-upgrade plexmediaserver >> /var/log/plex-update.log 2>&1
+```
+
+The `apt-get update` in front matters. A job that only runs `apt-get install --only-upgrade` relies on something else to refresh the package lists, and in a minimal Debian LXC container nothing does (see [Lessons Learned](/docs/home-server/media-automation/appendix/lessons-learned)). The file must be owned by root with mode 644, or cron ignores it. `--only-upgrade` keeps the job from touching any other package.
+
 To check the currently installed version:
 
 ```bash
